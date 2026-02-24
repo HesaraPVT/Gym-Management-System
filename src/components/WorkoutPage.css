@@ -1,0 +1,97 @@
+/* ===== WORKOUT PAGE ===== */
+.workout-page {
+  padding: 32px 48px;
+}
+
+.workout-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 24px;
+}
+
+.start-workout-btn {
+  width: 200px;
+  height: 45px;
+  background-color: #DA2129;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 25px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.start-workout-btn:hover {
+  background-color: #C41D24;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(218, 33, 41, 0.35);
+}
+
+/* ===== WORKOUT HISTORY ===== */
+.workout-history-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #231F20;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+}
+
+.workout-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workout-card {
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workout-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.workout-card-data {
+  flex: 1;
+}
+
+.workout-card-exercise {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  color: #231F20;
+  margin-bottom: 4px;
+}
+
+.workout-card-details {
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: #231F20;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.workout-card-date {
+  font-size: 12px;
+  color: #818284;
+  margin-top: 4px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.workout-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 12px;
+}
