@@ -1,0 +1,167 @@
+.shop-header {
+  background: white;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 12px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Header Logo */
+.header-logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Header Nav */
+.header-nav-shop {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  flex: 1;
+  margin-left: 50px;
+}
+
+.nav-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: #e63939;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #e63939;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Cart Icon */
+.cart-icon-link {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+}
+
+.cart-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.cart-icon:hover {
+  color: #e63939;
+}
+
+.cart-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Cart Count Badge */
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #e63939;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    padding: 12px 15px;
+    gap: 15px;
+  }
+
+  .header-nav-shop {
+    gap: 15px;
+    margin-left: 20px;
+  }
+
+  .nav-link {
+    font-size: 12px;
+  }
+
+  .header-logo {
+    height: 35px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 10px 12px;
+  }
+
+  .header-nav-shop {
+    gap: 12px;
+    margin-left: 15px;
+    flex-wrap: wrap;
+  }
+
+  .nav-link {
+    font-size: 11px;
+  }
+
+  .header-logo {
+    height: 30px;
+  }
+
+  .cart-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .cart-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+}

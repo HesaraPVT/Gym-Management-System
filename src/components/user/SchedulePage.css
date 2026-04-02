@@ -1,0 +1,1300 @@
+/* Schedule Page Styles */
+.schedule-page {
+  padding: 0;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.schedule-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.schedule-header {
+  background: linear-gradient(135deg, #e63939 0%, #c41e1e 100%);
+  color: white;
+  text-align: center;
+  padding: 25px 20px;
+  margin: 0;
+  box-shadow: 0 4px 12px rgba(230, 57, 57, 0.3);
+}
+
+.schedule-header h2 {
+  font-size: 36px;
+  font-weight: 900;
+  margin: 0 0 5px 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.schedule-header p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.schedule-loading {
+  text-align: center;
+  padding: 100px 20px;
+  font-size: 18px;
+  color: #666;
+}
+
+.schedule-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 25px 30px 30px 30px;
+  background: white;
+  margin: 0 30px 30px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Filters */
+.schedule-filters {
+  background: #f9f9f9;
+  padding: 16px 20px;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+}
+
+.filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  background: white;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.filter-group select:hover {
+  border-color: #e63939;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  background: white;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.view-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  transition: all 0.3s ease;
+}
+
+.view-btn.active {
+  background: #e63939;
+  color: white;
+}
+
+.view-btn:hover {
+  color: #e63939;
+}
+
+/* Main Content */
+.schedule-main {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 25px;
+}
+
+.available-sessions,
+.my-bookings {
+  background: transparent;
+  padding: 0;
+}
+
+.available-sessions h3,
+.my-bookings h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 18px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+}
+
+.session-count,
+.booking-count {
+  background: #e63939;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+  margin-left: auto;
+}
+
+/* Training Slots Grid */
+.training-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.training-slot-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 18px;
+  background: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.training-slot-card:hover:not(.full) {
+  box-shadow: 0 6px 16px rgba(230, 57, 57, 0.12);
+  border-color: #e63939;
+  transform: translateY(-2px);
+}
+
+.training-slot-card.full {
+  opacity: 0.6;
+  background: #f9f9f9;
+}
+
+.slot-header {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.category-badge {
+  color: white;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.group-badge {
+  background: #f0f0f0;
+  color: #333;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.slot-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.trainer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  color: #e63939;
+  transition: opacity 0.3s ease;
+}
+
+.trainer-info:hover {
+  opacity: 0.85;
+}
+
+.trainer-avatar {
+  width: 28px;
+  height: 28px;
+  background: #ffe0e0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border: 1px solid #e63939;
+}
+
+.trainer-name {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+}
+
+.trainer-rating {
+  font-size: 11px;
+  background: #fffacd;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #b8860b;
+  font-weight: 700;
+  border: 1px solid #f0e68c;
+}
+
+.slot-datetime {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.date-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  background: #fff0f0;
+  border-radius: 6px;
+  border: 1px solid #e63939;
+}
+
+.month {
+  font-size: 10px;
+  font-weight: 700;
+  color: #e63939;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.day {
+  font-size: 16px;
+  font-weight: 900;
+  color: #333;
+}
+
+.time-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.day-name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+}
+
+.time-range {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.slot-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.availability {
+  flex: 1;
+}
+
+.availability-label {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.availability-value {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.availability-value.available {
+  color: #4caf50;
+}
+
+.availability-value.full {
+  color: #e63939;
+}
+
+.book-btn {
+  padding: 7px 14px;
+  background: #e63939;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.book-btn:hover {
+  background: #d63030;
+}
+
+.book-btn.disabled {
+  background: #ddd;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* No Slots */
+.no-slots {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.no-slots-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.no-slots p {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* My Bookings */
+.no-bookings {
+  text-align: center;
+  padding: 30px 15px;
+  color: #999;
+  border: 1px dashed #ddd;
+  border-radius: 6px;
+  background: #f9f9f9;
+  font-size: 13px;
+}
+
+.bookings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.bookings-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.bookings-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.bookings-list::-webkit-scrollbar-thumb {
+  background: #e63939;
+  border-radius: 10px;
+}
+
+.booking-card {
+  padding: 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  transition: all 0.3s ease;
+  border-left: 3px solid #e63939;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.booking-card:hover {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.booking-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.booking-date {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.booking-time {
+  margin: 3px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e63939;
+}
+
+.booking-trainer {
+  margin: 3px 0 0 0;
+  font-size: 11px;
+  color: #666;
+}
+
+.booking-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-chat,
+.btn-cancel {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.btn-chat {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+
+.btn-chat:hover {
+  background: #2196f3;
+  color: white;
+}
+
+.btn-cancel {
+  background: #ffebee;
+  color: #e63939;
+}
+
+.btn-cancel:hover {
+  background: #e63939;
+  color: white;
+}
+
+/* Calendar View */
+.schedule-calendar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.calendar-container {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e8e8e8;
+}
+
+.calendar-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.calendar-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.weekday {
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+.calendar-day.empty {
+  background: #f9f9f9;
+  cursor: default;
+  border-color: #f0f0f0;
+}
+
+.calendar-day.has-slots {
+  background: #fff5f5;
+  border-color: #e63939;
+}
+
+.calendar-day.selected {
+  background: #e63939;
+  color: white;
+  border-color: #e63939;
+}
+
+.day-number {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.day-indicator {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.slot-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+.more-indicator {
+  font-size: 9px;
+  font-weight: 700;
+  color: #e63939;
+}
+
+.calendar-details {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+  border: 1px solid #e8e8e8;
+}
+
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.details-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: #e63939;
+}
+
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.detail-item .category {
+  color: white;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.spots {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.spots.available {
+  color: #4caf50;
+}
+
+.spots.full {
+  color: #e63939;
+}
+
+.detail-item h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+}
+
+.detail-time {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.detail-trainer {
+  margin-bottom: 10px;
+}
+
+.trainer-link {
+  font-size: 12px;
+  color: #e63939;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.trainer-link:hover {
+  opacity: 0.8;
+}
+
+.detail-book-btn {
+  width: 100%;
+  padding: 7px;
+  background: #e63939;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.detail-book-btn:hover:not(.disabled) {
+  background: #d63030;
+}
+
+.detail-book-btn.disabled {
+  background: #ddd;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s ease;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: #e63939;
+}
+
+/* Trainer Profile Modal */
+.trainer-profile {
+  text-align: center;
+}
+
+.trainer-avatar-large {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #e63939;
+  background: #e63939;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trainer-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 40px;
+  font-weight: bold;
+  background: #e63939;
+}
+
+.trainer-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.trainer-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.stars {
+  font-weight: 700;
+  color: #e63939;
+}
+
+.reviews {
+  color: #999;
+}
+
+.trainer-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.trainer-details .detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: white;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #e8e8e8;
+}
+
+.detail-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+}
+
+.trainer-achievements {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.trainer-achievements h3 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.achievements-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.achievement-badge {
+  background: #e63939;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.book-button {
+  width: 100%;
+  padding: 12px;
+  background: #e63939;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.book-button:hover {
+  background: #d63030;
+}
+
+/* Booking Confirmation Modal */
+.booking-confirmation-modal {
+  text-align: center;
+}
+
+.confirmation-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.booking-confirmation-modal h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+}
+
+.confirmation-details {
+  background: #f9f9f9;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: left;
+  border: 1px solid #e8e8e8;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e8e8e8;
+  font-size: 13px;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 700;
+  color: #666;
+}
+
+.detail-value {
+  font-weight: 700;
+  color: #333;
+}
+
+.detail-value.trainer {
+  color: #e63939;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cancel,
+.btn-confirm {
+  flex: 1;
+  padding: 11px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+}
+
+.btn-cancel {
+  background: #e8e8e8;
+  color: #333;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #ddd;
+}
+
+.btn-confirm {
+  background: #e63939;
+  color: white;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  background: #d63030;
+}
+
+.btn-cancel:disabled,
+.btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Chat Box */
+.chat-box {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 360px;
+  max-width: 90vw;
+  height: 480px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+  animation: slideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e8e8e8;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.chat-header {
+  background: linear-gradient(135deg, #e63939 0%, #c41e1e 100%);
+  color: white;
+  padding: 14px 16px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.chat-user-details {
+  text-align: left;
+  min-width: 0;
+}
+
+.chat-user-details h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-user-details p {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chat-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.chat-close:hover {
+  opacity: 0.8;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fafafa;
+}
+
+.chat-empty {
+  text-align: center;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 12px;
+}
+
+.chat-message {
+  display: flex;
+  margin-bottom: 6px;
+}
+
+.chat-message.sent {
+  justify-content: flex-end;
+}
+
+.chat-message.received {
+  justify-content: flex-start;
+}
+
+.message-content {
+  max-width: 70%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.chat-message.sent .message-content {
+  background: linear-gradient(135deg, #e63939 0%, #c41e1e 100%);
+  color: white;
+  border-radius: 10px 2px 10px 10px;
+}
+
+.chat-message.received .message-content {
+  background: white;
+  color: #333;
+  border: 1px solid #e8e8e8;
+  border-radius: 2px 10px 10px 10px;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #e8e8e8;
+  background: white;
+  border-radius: 0 0 12px 12px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+  font-size: 12px;
+  outline: none;
+  transition: all 0.3s ease;
+  background: white;
+  color: #333;
+}
+
+.chat-input::placeholder {
+  color: #999;
+}
+
+.chat-input:focus {
+  border-color: #e63939;
+  box-shadow: 0 0 0 3px rgba(230, 57, 57, 0.1);
+}
+
+.chat-send-btn {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #e63939 0%, #c41e1e 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.chat-send-btn:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(230, 57, 57, 0.3);
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .schedule-main {
+    grid-template-columns: 1fr;
+  }
+
+  .view-toggle {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .schedule-filters {
+    flex-direction: column;
+  }
+
+  .schedule-calendar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .schedule-page {
+    padding: 0;
+  }
+
+  .schedule-content {
+    margin: 0 15px 15px 15px;
+    padding: 15px;
+  }
+
+  .schedule-header h2 {
+    font-size: 28px;
+  }
+
+  .training-slots-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .my-bookings {
+    grid-column: 1 / -1;
+  }
+
+  .schedule-filters {
+    flex-direction: column;
+  }
+
+  .filter-group select {
+    width: 100%;
+  }
+
+  .view-btn {
+    flex: 1;
+  }
+
+  .chat-box {
+    width: 100%;
+    height: 70vh;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    border-radius: 12px 12px 0 0;
+    max-width: none;
+  }
+}
