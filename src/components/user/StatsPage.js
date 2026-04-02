@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './StatsPage.css';
-import instructionImg from '../images/instruction.jpeg';
+import { useToast } from '../Toast';
+import instructionImg from '../../images/instruction.jpeg';
 
 function StatsPage({ measurements, setMeasurements }) {
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     weight: '',
     bodyFat: '',
@@ -13,36 +16,119 @@ function StatsPage({ measurements, setMeasurements }) {
     date: new Date().toISOString().split('T')[0],
   });
 
+  // Load measurements from backend on mount
+  useEffect(() => {
+    const loadMeasurements = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user'));
+        if (!userData || !userData.id) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`http://localhost:5000/api/users/${userData.id}/measurements`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setMeasurements(data);
+        }
+      } catch (error) {
+        console.error('Error loading measurements:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMeasurements();
+  }, []);
+
   const latestMeasurement = measurements.length > 0 ? measurements[measurements.length - 1] : null;
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId !== null) {
-      setMeasurements(
-        measurements.map((m) =>
-          m.id === editingId ? { ...m, ...formData } : m
-        )
-      );
-      setEditingId(null);
-    } else {
-      const newMeasurement = {
-        id: Date.now(),
-        ...formData,
+    
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.id) {
+        toast.error('User not found');
+        return;
+      }
+
+      const measurementPayload = {
+        weight: parseFloat(formData.weight),
+        bodyFat: parseFloat(formData.bodyFat),
+        muscleMass: parseFloat(formData.muscleMass),
+        height: parseFloat(formData.height),
+        date: formData.date
       };
-      setMeasurements([...measurements, newMeasurement]);
+
+      let response;
+      
+      if (editingId !== null) {
+        // Update existing measurement
+        response = await fetch(`http://localhost:5000/api/users/${userData.id}/measurements/${editingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(measurementPayload)
+        });
+
+        if (response.ok) {
+          const updated = await response.json();
+          setMeasurements(
+            measurements.map((m) => m.id === editingId ? updated : m)
+          );
+          toast.success('Measurement updated successfully');
+          setEditingId(null);
+        } else {
+          const error = await response.json();
+          toast.error('Error updating measurement: ' + error.detail);
+          return;
+        }
+      } else {
+        // Create new measurement
+        response = await fetch(`http://localhost:5000/api/users/${userData.id}/measurements`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(measurementPayload)
+        });
+
+        if (response.ok) {
+          const newMeasurement = await response.json();
+          setMeasurements([...measurements, newMeasurement]);
+          toast.success('Measurement added successfully');
+        } else {
+          const error = await response.json();
+          toast.error('Error saving measurement: ' + error.detail);
+          return;
+        }
+      }
+
+      setFormData({
+        weight: '',
+        bodyFat: '',
+        muscleMass: '',
+        height: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+      setShowForm(false);
+    } catch (error) {
+      console.error('Error saving measurement:', error);
+      toast.error('Error saving measurement');
     }
-    setFormData({
-      weight: '',
-      bodyFat: '',
-      muscleMass: '',
-      height: '',
-      date: new Date().toISOString().split('T')[0],
-    });
-    setShowForm(false);
   };
 
   const handleEdit = (measurement) => {
@@ -57,8 +143,34 @@ function StatsPage({ measurements, setMeasurements }) {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    setMeasurements(measurements.filter((m) => m.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this measurement?')) return;
+    
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.id) {
+        toast.error('User not found');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/users/${userData.id}/measurements/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        setMeasurements(measurements.filter((m) => m.id !== id));
+        toast.success('Measurement deleted successfully');
+      } else {
+        const error = await response.json();
+        toast.error('Error deleting measurement: ' + error.detail);
+      }
+    } catch (error) {
+      console.error('Error deleting measurement:', error);
+      toast.error('Error deleting measurement');
+    }
   };
 
   const handleCloseForm = () => {
@@ -74,13 +186,24 @@ function StatsPage({ measurements, setMeasurements }) {
   };
 
   const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
+    let d;
+    if (typeof dateStr === 'string' && dateStr.includes('T')) {
+      d = new Date(dateStr);
+    } else if (typeof dateStr === 'string') {
+      d = new Date(dateStr + 'T00:00:00');
+    } else {
+      d = new Date(dateStr);
+    }
     return d.toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'numeric',
       year: 'numeric',
     });
   };
+
+  if (loading) {
+    return <div className="stats-page"><p>Loading...</p></div>;
+  }
 
   return (
     <div className="stats-page">
@@ -216,6 +339,7 @@ function StatsPage({ measurements, setMeasurements }) {
                   value={formData.weight}
                   onChange={handleInputChange}
                   step="0.1"
+                  min="0.1"
                   required
                 />
               </div>
@@ -229,6 +353,8 @@ function StatsPage({ measurements, setMeasurements }) {
                   value={formData.bodyFat}
                   onChange={handleInputChange}
                   step="0.1"
+                  min="0"
+                  max="100"
                   required
                 />
               </div>
@@ -242,6 +368,7 @@ function StatsPage({ measurements, setMeasurements }) {
                   value={formData.muscleMass}
                   onChange={handleInputChange}
                   step="0.1"
+                  min="0.1"
                   required
                 />
               </div>
@@ -255,6 +382,7 @@ function StatsPage({ measurements, setMeasurements }) {
                   value={formData.height}
                   onChange={handleInputChange}
                   step="0.1"
+                  min="0.1"
                   required
                 />
               </div>

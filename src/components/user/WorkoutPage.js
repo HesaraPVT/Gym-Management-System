@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './WorkoutPage.css';
-import instructionImg from '../images/instruction.jpeg';
+import { useToast } from '../Toast';
+import instructionImg from '../../images/instruction.jpeg';
 
 function WorkoutPage({ workouts, setWorkouts }) {
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     exercise: '',
     sets: '',
@@ -13,50 +16,159 @@ function WorkoutPage({ workouts, setWorkouts }) {
     date: new Date().toISOString().split('T')[0],
   });
 
+  // Load workouts from backend on mount
+  useEffect(() => {
+    const loadWorkouts = async () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem('user'));
+        if (!userData || !userData.id) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`http://localhost:5000/api/users/${userData.id}/workouts`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setWorkouts(data);
+        }
+      } catch (error) {
+        console.error('Error loading workouts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadWorkouts();
+  }, []);
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingId !== null) {
-      setWorkouts(
-        workouts.map((w) =>
-          w.id === editingId ? { ...w, ...formData } : w
-        )
-      );
-      setEditingId(null);
-    } else {
-      const newWorkout = {
-        id: Date.now(),
-        ...formData,
+    
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.id) {
+        toast.error('User not found');
+        return;
+      }
+
+      const workoutPayload = {
+        exercise: formData.exercise,
+        sets: parseInt(formData.sets),
+        reps: parseInt(formData.reps),
+        weight: parseFloat(formData.weight),
+        date: formData.date
       };
-      setWorkouts([...workouts, newWorkout]);
+
+      let response;
+
+      if (editingId !== null) {
+        // Update existing workout
+        response = await fetch(`http://localhost:5000/api/users/${userData.id}/workouts/${editingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(workoutPayload)
+        });
+
+        if (response.ok) {
+          const updated = await response.json();
+          setWorkouts(
+            workouts.map((w) => w.id === editingId ? updated : w)
+          );
+          toast.success('Workout updated successfully');
+          setEditingId(null);
+        } else {
+          const error = await response.json();
+          toast.error('Error updating workout: ' + error.detail);
+          return;
+        }
+      } else {
+        // Create new workout
+        response = await fetch(`http://localhost:5000/api/users/${userData.id}/workouts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(workoutPayload)
+        });
+
+        if (response.ok) {
+          const newWorkout = await response.json();
+          setWorkouts([...workouts, newWorkout]);
+          toast.success('Workout added successfully');
+        } else {
+          const error = await response.json();
+          toast.error('Error saving workout: ' + error.detail);
+          return;
+        }
+      }
+
+      setFormData({
+        exercise: '',
+        sets: '',
+        reps: '',
+        weight: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+      setShowForm(false);
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      toast.error('Error saving workout');
     }
-    setFormData({
-      exercise: '',
-      sets: '',
-      reps: '',
-      weight: '',
-      date: new Date().toISOString().split('T')[0],
-    });
-    setShowForm(false);
   };
 
   const handleEdit = (workout) => {
     setFormData({
       exercise: workout.exercise,
-      sets: workout.sets,
-      reps: workout.reps,
-      weight: workout.weight,
+      sets: workout.sets.toString(),
+      reps: workout.reps.toString(),
+      weight: workout.weight.toString(),
       date: workout.date,
     });
     setEditingId(workout.id);
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    setWorkouts(workouts.filter((w) => w.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this workout?')) return;
+    
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      if (!userData || !userData.id) {
+        toast.error('User not found');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/users/${userData.id}/workouts/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        setWorkouts(workouts.filter((w) => w.id !== id));
+        toast.success('Workout deleted successfully');
+      } else {
+        const error = await response.json();
+        toast.error('Error deleting workout: ' + error.detail);
+      }
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      toast.error('Error deleting workout');
+    }
   };
 
   const handleCloseForm = () => {
@@ -72,13 +184,24 @@ function WorkoutPage({ workouts, setWorkouts }) {
   };
 
   const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
+    let d;
+    if (typeof dateStr === 'string' && dateStr.includes('T')) {
+      d = new Date(dateStr);
+    } else if (typeof dateStr === 'string') {
+      d = new Date(dateStr + 'T00:00:00');
+    } else {
+      d = new Date(dateStr);
+    }
     return d.toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'numeric',
       year: 'numeric',
     });
   };
+
+  if (loading) {
+    return <div className="workout-page"><p>Loading...</p></div>;
+  }
 
   return (
     <div className="workout-page">
@@ -169,6 +292,7 @@ function WorkoutPage({ workouts, setWorkouts }) {
                   placeholder="e.g. Bench Press"
                   value={formData.exercise}
                   onChange={handleInputChange}
+                  minLength="1"
                   required
                 />
               </div>
@@ -207,7 +331,8 @@ function WorkoutPage({ workouts, setWorkouts }) {
                   placeholder="e.g. 100"
                   value={formData.weight}
                   onChange={handleInputChange}
-                  step="0.5"
+                  min="1"
+                  max="500"
                   required
                 />
               </div>

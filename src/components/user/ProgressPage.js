@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import './ProgressPage.css';
-import instructionImg from '../images/instruction.jpeg';
+import instructionImg from '../../images/instruction.jpeg';
 
 function ProgressPage({ measurements }) {
   const [selectedMetric, setSelectedMetric] = useState('weight');

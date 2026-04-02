@@ -1,0 +1,336 @@
+/* ===== ADMIN WORKOUT PAGE ===== */
+.admin-workout-page {
+  padding: 32px 48px;
+}
+
+.admin-header {
+  margin-bottom: 28px;
+}
+
+.admin-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #231F20;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -1px;
+}
+
+/* ===== SEARCH & FILTER SECTION ===== */
+.search-filter-section {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 250px;
+}
+
+.search-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid #E0E0E0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: #231F20;
+  outline: none;
+  transition: border-color 0.2s ease;
+  background-color: #FFFFFF;
+}
+
+.search-input:focus {
+  border-color: #DA2129;
+}
+
+.search-input::placeholder {
+  color: #818284;
+}
+
+/* ===== ADMIN CONTENT LAYOUT ===== */
+.admin-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+}
+
+.members-list-section,
+.history-section {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #231F20;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+}
+
+.history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.history-header > div {
+  flex: 1;
+}
+
+.history-header .section-title {
+  margin-bottom: 12px;
+}
+
+.filter-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1.5px solid #E0E0E0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: #231F20;
+  background-color: #FFFFFF;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.filter-select:hover {
+  border-color: #818284;
+}
+
+.filter-select:focus {
+  border-color: #DA2129;
+}
+
+.close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #E0E0E0;
+  background: #FFFFFF;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #231F20;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.close-btn:hover {
+  background-color: #F5F5F5;
+}
+
+/* ===== MEMBERS LIST ===== */
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 700px;
+  overflow-y: auto;
+}
+
+.member-item {
+  padding: 16px;
+  background-color: #F9F9F9;
+  border: 1px solid #E0E0E0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-item:hover {
+  background-color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.member-item.active {
+  background: linear-gradient(135deg, #DA2129 0%, #231F20 100%);
+  color: #FFFFFF;
+  border-color: transparent;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: inherit;
+  font-family: 'DM Sans', sans-serif;
+  margin: 0 0 4px 0;
+}
+
+.member-stats {
+  font-size: 12px;
+  color: inherit;
+  font-family: 'DM Sans', sans-serif;
+  margin: 0 0 4px 0;
+  opacity: 0.8;
+}
+
+.member-last-workout {
+  font-size: 11px;
+  color: inherit;
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
+  opacity: 0.7;
+}
+
+.member-item.active .member-stats,
+.member-item.active .member-last-workout {
+  color: #FFFFFF;
+  opacity: 0.9;
+}
+
+.member-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #231F20;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  flex-shrink: 0;
+}
+
+.member-item.active .member-badge {
+  background-color: #FFFFFF;
+  color: #231F20;
+}
+
+.no-results {
+  padding: 40px 20px;
+  text-align: center;
+  color: #818284;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ===== WORKOUT HISTORY ===== */
+.workout-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 700px;
+  overflow-y: auto;
+}
+
+.workout-card {
+  background-color: #F9F9F9;
+  border-radius: 12px;
+  padding: 16px 20px;
+  border: 1px solid #E0E0E0;
+  transition: all 0.2s ease;
+}
+
+.workout-card:hover {
+  background-color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.workout-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.workout-exercise {
+  font-size: 14px;
+  font-weight: 700;
+  color: #231F20;
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
+}
+
+.workout-date {
+  font-size: 11px;
+  color: #818284;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.workout-card-details {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: #818284;
+  font-family: 'DM Sans', sans-serif;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.detail-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #231F20;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.detail-item.total-volume .detail-value {
+  color: #DA2129;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  padding: 60px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  text-align: center;
+  color: #818284;
+  font-size: 16px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+@media (max-width: 1200px) {
+  .admin-content {
+    grid-template-columns: 1fr;
+  }
+
+  .members-list-section {
+    max-height: 300px;
+  }
+
+  .workout-card-details {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-content {
+    grid-template-columns: 1fr;
+  }
+}
