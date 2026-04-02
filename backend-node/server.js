@@ -9,6 +9,8 @@ import errorHandler from './middleware/errorHandler.js';
 // Route imports
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
+import adminRoutes from './routes/admins.js';
+import trainerRoutes from './routes/trainers.js';
 import progressRoutes from './routes/progress.js';
 import membershipRoutes from './routes/memberships.js';
 import shopRoutes from './routes/shop.js';
@@ -64,6 +66,12 @@ app.use('/api/auth', authRoutes);
 
 // User routes
 app.use('/api/users', userRoutes);
+
+// Admin routes
+app.use('/api/admins', adminRoutes);
+
+// Trainer routes
+app.use('/api/trainers', trainerRoutes);
 
 // Progress routes
 app.use('/api/progress', progressRoutes);
