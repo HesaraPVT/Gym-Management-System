@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+/*import React, { useState, useEffect } from 'react';
 import './AdminOrderTracking.css';
 
 function AdminOrderTracking() {
@@ -187,6 +187,244 @@ function AdminOrderTracking() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export default AdminOrderTracking;
+*/
+
+
+
+
+
+import React, { useEffect, useState, useRef } from "react";
+import axios from "axios";
+import "./AdminOrderTracking.css";
+
+function AdminOrderTracking() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [activeTrackingId, setActiveTrackingId] = useState(null);
+  const watchIdRef = useRef(null);
+
+  const API_BASE = "http://localhost:5000";
+
+  const fetchOrders = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/api/orders`);
+      setOrders(res.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    return () => stopTracking();
+  }, []);
+
+  // --- LIVE GPS TRACKING ---
+  const startTracking = (orderId) => {
+    if (!navigator.geolocation) return alert("Geolocation not supported");
+    setActiveTrackingId(orderId);
+    
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          await axios.patch(`${API_BASE}/api/orders/${orderId}`, {
+            riderLocation: { lat: latitude, lng: longitude }
+          });
+          fetchOrders();
+        } catch (err) {
+          console.error("Update failed", err);
+        }
+      },
+      (error) => {
+        alert("GPS Error: " + error.message);
+        stopTracking();
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  const stopTracking = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    setActiveTrackingId(null);
+  };
+
+  // --- ANALYTICS ---
+  const calculateStats = () => {
+    let totalRevenue = 0;
+    const productSales = {};
+
+    orders.forEach((order) => {
+      totalRevenue += Number(order.totalAmount) || 0;
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item) => {
+          if (item?.name) {
+            productSales[item.name] = (productSales[item.name] || 0) + (Number(item.quantity) || 0);
+          }
+        });
+      }
+    });
+
+    const topProducts = Object.entries(productSales)
+      .map(([name, qty]) => ({ name, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+
+    return { totalRevenue, topProducts };
+  };
+
+  const { totalRevenue, topProducts } = calculateStats();
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await axios.patch(`${API_BASE}/api/orders/${id}`, { status: newStatus });
+      fetchOrders();
+    } catch (err) { alert("Update failed"); }
+  };
+
+  if (loading) return <div className="admin-loading">Loading Order Management...</div>;
+
+  return (
+    <div className="admin-tracking-container">
+      <header className="tracking-header">
+        <h1>Order <span>Tracking Management</span></h1>
+        <p>Control live delivery status and monitor revenue</p>
+      </header>
+
+      {/* STATS SECTION */}
+      <div className="stats-container">
+        <div className="stat-card revenue">
+          <h4>Total Revenue</h4>
+          <p className="price">LKR {totalRevenue.toLocaleString()}</p>
+        </div>
+        <div className="stat-card items">
+          <h4>Top Selling Products</h4>
+          <div className="top-products-list">
+            {topProducts.map((p, i) => (
+              <div key={i} className="product-row">
+                <span>{p.name}</span>
+                <span className="badge">{p.qty} Sold</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* TABLE SECTION */}
+      <div className="table-card">
+        <table className="order-table">
+          <thead>
+            <tr>
+              <th>Customer / ID</th>
+              <th>Status</th>
+              <th>Live GPS</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map(order => (
+              <tr key={order._id}>
+                <td>
+                  <div className="customer-info">
+                    <strong>{order.deliveryDetails?.customerName || "Unknown"}</strong>
+                    <span>ID: {order._id.substring(order._id.length - 6)}</span>
+                  </div>
+                </td>
+                <td>
+                  <select 
+                    className="status-dropdown"
+                    value={order.status} 
+                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="out for delivery">Out for Delivery</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </td>
+                <td>
+                  {activeTrackingId === order._id ? (
+                    <button onClick={stopTracking} className="btn-stop">🛑 Stop</button>
+                  ) : (
+                    <button 
+                      onClick={() => startTracking(order._id)} 
+                      className="btn-gps" 
+                      disabled={activeTrackingId !== null}
+                    >
+                      📡 Start GPS
+                    </button>
+                  )}
+                  <div className="coord-text">
+                    {order.riderLocation?.lat?.toFixed(4) || "0.000"}, {order.riderLocation?.lng?.toFixed(4) || "0.000"}
+                  </div>
+                </td>
+                <td>
+                  <button onClick={() => setSelectedOrder(order)} className="btn-details">Details</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* MODAL */}
+      {selectedOrder && (
+        <div className="admin-modal-overlay" onClick={() => setSelectedOrder(null)}>
+          <div className="admin-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Order Detail Overview</h3>
+              <button className="close-x" onClick={() => setSelectedOrder(null)}>&times;</button>
+            </div>
+            
+            <div className="modal-body">
+              <section className="info-section">
+                <p><strong>Customer:</strong> {selectedOrder.deliveryDetails?.customerName}</p>
+                <p><strong>Phone:</strong> {selectedOrder.deliveryDetails?.phone}</p>
+                <p><strong>Address:</strong> {selectedOrder.deliveryDetails?.address}</p>
+              </section>
+
+              <h4>Ordered Items</h4>
+              <div className="items-box">
+                {selectedOrder.items.map((item, i) => (
+                  <div key={i} className="item-line">
+                    <span>{item.name} (x{item.quantity})</span>
+                    <span>Rs. {(item.price * item.quantity).toLocaleString()}</span>
+                  </div>
+                ))}
+                <div className="total-line">
+                  Total: LKR {Number(selectedOrder.totalAmount).toLocaleString()}
+                </div>
+              </div>
+
+              <h4>Payment Status</h4>
+              <div className={`payment-method-box ${selectedOrder.paymentMethod?.toLowerCase()}`}>
+                <p>Method: <strong>{selectedOrder.paymentMethod}</strong></p>
+                {selectedOrder.paymentMethod === "BANK" && selectedOrder.paymentSlip && (
+                   <img 
+                     src={`${API_BASE}/images/${selectedOrder.paymentSlip.split(/[\\/]/).pop()}`} 
+                     alt="Bank Slip" 
+                     className="slip-preview" 
+                   />
+                )}
+              </div>
+            </div>
+            <button className="btn-close-panel" onClick={() => setSelectedOrder(null)}>Dismiss</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
