@@ -182,7 +182,9 @@ export default TrackOrder;*/
 
 
 
-import React, { useEffect, useState, useCallback } from "react";
+
+
+/*import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -318,7 +320,7 @@ function TrackOrder({ orderId }) {
         </div>
 
         <div className="map-box">
-          {/* Use order ID as key to prevent 'render is not a function' errors on update */}
+          {/* Use order ID as key to prevent 'render is not a function' errors on update *//*}
           <MapContainer key={order._id} center={position} zoom={14} style={{ height: "100%", width: "100%" }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <Marker position={position} icon={redIcon}>
@@ -340,6 +342,299 @@ function TrackOrder({ orderId }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+export default TrackOrder;*/
+
+
+
+
+
+
+/*import React, { useEffect, useState, useCallback } from "react";
+import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import ShopHeader from '../components/common/ShopHeader'; 
+import './TrackOrder.css';
+
+const redIcon = L.icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
+function TrackOrder() {
+  const [order, setOrder] = useState(null);
+  const [error, setError] = useState("");
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const fetchOrder = useCallback(async () => {
+    const orderId = id || localStorage.getItem("lastOrderId");
+    if (!orderId) {
+      setError("No active order found.");
+      return;
+    }
+    try {
+      const res = await axios.get(`http://localhost:5000/api/shop/order/${orderId}?t=${Date.now()}`);
+      setOrder(res.data);
+      setError("");
+    } catch (err) {
+      setError("Order not found.");
+    }
+  }, [id]);
+
+  const handleDeleteOrder = async () => {
+    if (window.confirm("Are you sure you want to cancel this order?")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/shop/order/${order._id}`);
+        alert("Order cancelled.");
+        localStorage.removeItem("lastOrderId");
+        navigate("/products");
+      } catch (err) {
+        alert(err.response?.data?.message || "Error deleting order.");
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchOrder();
+    const interval = setInterval(fetchOrder, 10000);
+    return () => clearInterval(interval);
+  }, [fetchOrder]);
+
+  if (error) return <div className="loading-container"><ShopHeader /><p>{error}</p></div>;
+  if (!order) return <div className="loading-container"><ShopHeader /><p>Loading...</p></div>;
+
+  return (
+    <div className="track-order-container">
+      <ShopHeader />
+      <div className="track-order-content">
+        <div className="info-panel">
+          <div className="status-badge-top">
+            STATUS: {(order.status || "Pending").toUpperCase()}
+          </div>
+
+          <div className="details-card">
+            <div className="detail-group">
+              <label>Order ID</label>
+              <span className="order-id-red">#{order._id?.substring(order._id.length - 6)}</span>
+            </div>
+
+            <div className="detail-group total-box">
+              <label>Total</label>
+              <span className="amount-text">LKR {order.totalAmount?.toLocaleString()}</span>
+            </div>
+
+            
+            {order.status === 'pending' && (
+              <button onClick={handleDeleteOrder} className="cancel-btn-modern">
+                ✕ Cancel Order
+              </button>
+            )}
+
+            <hr className="sep-line" />
+
+            <div className="delivery-info-section">
+              <label>DELIVERY TO:</label>
+              <h4>{order.shippingAddress?.fullName}</h4>
+              <p>{order.shippingAddress?.phone}</p>
+              <p className="addr-small">{order.shippingAddress?.address}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="map-panel">
+          <MapContainer 
+            key={order.riderLocation?.lat}
+            center={order.riderLocation?.lat ? [order.riderLocation.lat, order.riderLocation.lng] : [6.9271, 79.8612]} 
+            zoom={15} 
+            className="main-map"
+          >
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <Marker position={[order.riderLocation.lat, order.riderLocation.lng]} icon={redIcon}>
+              <Popup>Power Rider is here!</Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default TrackOrder;*/
+
+
+
+
+
+
+import React, { useEffect, useState, useCallback } from "react";
+import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import ShopHeader from '../components/common/ShopHeader'; 
+import './TrackOrder.css';
+
+const redIcon = L.icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
+function TrackOrder() {
+  const [order, setOrder] = useState(null);
+  const [error, setError] = useState("");
+  const [newSlip, setNewSlip] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const API_BASE = "http://localhost:5000/api/shop";
+
+  const fetchOrder = useCallback(async () => {
+    const orderId = id || localStorage.getItem("lastOrderId");
+    if (!orderId) {
+      setError("No active order found.");
+      return;
+    }
+    try {
+      const res = await axios.get(`${API_BASE}/order/${orderId}?t=${Date.now()}`);
+      setOrder(res.data);
+      setError("");
+    } catch (err) {
+      setError("Order not found.");
+    }
+  }, [id]);
+
+  const handleReupload = async () => {
+    if (!newSlip) return alert("Please select a file first.");
+    
+    const formData = new FormData();
+    formData.append("paymentSlip", newSlip);
+
+    try {
+      setIsUploading(true);
+      await axios.patch(`${API_BASE}/order/${order._id}`, formData);
+      alert("Slip re-uploaded! Admin will verify it shortly.");
+      setNewSlip(null);
+      fetchOrder(); 
+    } catch (err) {
+      alert("Failed to upload slip.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (window.confirm("Are you sure you want to cancel this order?")) {
+      try {
+        await axios.delete(`${API_BASE}/order/${order._id}`);
+        alert("Order cancelled.");
+        localStorage.removeItem("lastOrderId");
+        navigate("/products");
+      } catch (err) {
+        alert(err.response?.data?.message || "Error deleting order.");
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchOrder();
+    const interval = setInterval(fetchOrder, 10000);
+    return () => clearInterval(interval);
+  }, [fetchOrder]);
+
+  if (error) return <div className="loading-container"><ShopHeader /><p>{error}</p></div>;
+  if (!order) return <div className="loading-container"><ShopHeader /><p>Loading...</p></div>;
+
+  return (
+    <div className="track-order-container">
+      <ShopHeader />
+      <div className="track-order-content">
+        <div className="info-panel">
+          {/* Main Status Badge - Kept as requested */}
+          <div className="status-badge-top">
+            STATUS: {(order.status || "Pending").toUpperCase()}
+          </div>
+
+          <div className="details-card">
+            {/* Rejection alert remains for functionality, but text is cleaner */}
+            {order.paymentStatus === "Rejected" && (
+              <div className="rejection-alert">
+                <p>⚠️ <strong>Action Required</strong></p>
+                <small>Issue found with your bank slip. Please re-upload below.</small>
+                <input 
+                  type="file" 
+                  onChange={(e) => setNewSlip(e.target.files[0])} 
+                  className="reupload-input"
+                />
+                <button 
+                  onClick={handleReupload} 
+                  disabled={isUploading}
+                  className="reupload-btn"
+                >
+                  {isUploading ? "Uploading..." : "Submit New Slip"}
+                </button>
+              </div>
+            )}
+
+            <div className="detail-group">
+              <label>Order ID</label>
+              <span className="order-id-red">#{order._id?.substring(order._id.length - 6)}</span>
+            </div>
+
+            <div className="detail-group total-box">
+              <label>Total</label>
+              <span className="amount-text">LKR {order.totalAmount?.toLocaleString()}</span>
+            </div>
+
+            {/* PAYMENT STATUS BLOCK REMOVED FROM HERE */}
+
+            {order.status === 'pending' && (
+              <button onClick={handleDeleteOrder} className="cancel-btn-modern">
+                ✕ Cancel Order
+              </button>
+            )}
+
+            <hr className="sep-line" />
+
+            <div className="delivery-info-section">
+              <label>DELIVERY TO:</label>
+              <h4>{order.shippingAddress?.fullName}</h4>
+              <p>{order.shippingAddress?.phone}</p>
+              <p className="addr-small">{order.shippingAddress?.address}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="map-panel">
+          <MapContainer 
+            key={order.riderLocation?.lat}
+            center={order.riderLocation?.lat ? [order.riderLocation.lat, order.riderLocation.lng] : [6.9271, 79.8612]} 
+            zoom={15} 
+            className="main-map"
+          >
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            {order.riderLocation?.lat && (
+              <Marker position={[order.riderLocation.lat, order.riderLocation.lng]} icon={redIcon}>
+                <Popup>Your Supplement Rider is here!</Popup>
+              </Marker>
+            )}
+          </MapContainer>
+        </div>
+      </div>
     </div>
   );
 }

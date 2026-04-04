@@ -286,6 +286,9 @@ function UserShoppingCart() {
     saveInfo: false
   });
 
+  // ✅ NEW: State for validation error messages
+  const [errors, setErrors] = useState({});
+
   // 1. Load Cart AND Saved User Info on Mount
   useEffect(() => {
     // Load Cart
@@ -338,15 +341,47 @@ function UserShoppingCart() {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
     });
+    
+    // ✅ NEW: Clear specific error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const calculateTotal = () => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
+  // ✅ NEW: Validation Logic Helper
+  const validateForm = () => {
+    const newErrors = {};
+    const sriLankanPhoneRegex = /^(?:0|94|\+94)?7(?:0|1|2|4|5|6|7|8)\d{7}$/;
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+    } else if (formData.fullName.trim().split(" ").length < 2) {
+      newErrors.fullName = "Please enter at least two names";
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = "Delivery address is required";
+    } else if (formData.address.trim().length < 10) {
+      newErrors.address = "Please provide a more detailed address";
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!sriLankanPhoneRegex.test(formData.phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Invalid Sri Lankan phone number";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleProceedCheckout = () => {
-    if (!formData.fullName || !formData.address || !formData.phone) {
-      alert('Please fill in all delivery details');
+    // ✅ VALIDATION ADDED HERE
+    if (!validateForm()) {
       return;
     }
 
@@ -426,9 +461,9 @@ function UserShoppingCart() {
                   </div>
                   <div className="quantity-control">
                     <button className="qty-btn" onClick={() => handleQuantityChange(item.id, item.quantity - 1)}>−</button>
-                    <input 
-                      type="number" 
-                      value={item.quantity} 
+                    <input
+                      type="number"
+                      value={item.quantity}
                       onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value))}
                       min="1"
                     />
@@ -470,15 +505,39 @@ function UserShoppingCart() {
               <form className="checkout-form">
                 <div className="form-group">
                   <label>FULL NAME *</label>
-                  <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} placeholder="Enter your full name" />
+                  <input 
+                    type="text" 
+                    name="fullName" 
+                    value={formData.fullName} 
+                    onChange={handleInputChange} 
+                    placeholder="Enter your full name" 
+                    style={errors.fullName ? {border: '1px solid #ff4d4f'} : {}}
+                  />
+                  {errors.fullName && <small style={{color: '#ff4d4f', display: 'block', marginTop: '5px'}}>{errors.fullName}</small>}
                 </div>
                 <div className="form-group">
                   <label>DELIVERY ADDRESS *</label>
-                  <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="Enter your delivery address" rows="4"></textarea>
+                  <textarea 
+                    name="address" 
+                    value={formData.address} 
+                    onChange={handleInputChange} 
+                    placeholder="Enter your delivery address" 
+                    rows="4"
+                    style={errors.address ? {border: '1px solid #ff4d4f'} : {}}
+                  ></textarea>
+                  {errors.address && <small style={{color: '#ff4d4f', display: 'block', marginTop: '5px'}}>{errors.address}</small>}
                 </div>
                 <div className="form-group">
                   <label>PHONE NUMBER *</label>
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Enter your phone number" />
+                  <input 
+                    type="tel" 
+                    name="phone" 
+                    value={formData.phone} 
+                    onChange={handleInputChange} 
+                    placeholder="Enter your phone number" 
+                    style={errors.phone ? {border: '1px solid #ff4d4f'} : {}}
+                  />
+                  {errors.phone && <small style={{color: '#ff4d4f', display: 'block', marginTop: '5px'}}>{errors.phone}</small>}
                 </div>
                 <div className="form-group checkbox">
                   <input type="checkbox" name="saveInfo" id="saveInfo" checked={formData.saveInfo} onChange={handleInputChange} />
