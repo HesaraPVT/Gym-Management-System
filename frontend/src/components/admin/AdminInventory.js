@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, PackagePlus } from 'lucide-react';
 import AdminSuppliers from './AdminSuppliers';
 import AdminInvoices from './AdminInvoices';
+import { uploadProductImage, deleteProductImage } from '../../config/supabase';
 import './AdminInventory.css';
 
 const AdminInventory = () => {
@@ -16,6 +17,7 @@ const AdminInventory = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [restockProduct, setRestockProduct] = useState(null);
   const [restockQty, setRestockQty] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -25,7 +27,10 @@ const AdminInventory = () => {
     quantity: 0,
     reorderLevel: '',
     expiryDate: '',
-    description: ''
+    description: '',
+    imageFile: null,
+    imagePreview: null,
+    imageUrl: null
   });
 
   // Load products from localStorage
@@ -47,52 +52,128 @@ const AdminInventory = () => {
     }
   };
 
-  const saveProduct = () => {
+  const saveProduct = async () => {
     if (!formData.name || !formData.price || !formData.reorderLevel) {
       alert('Please fill all required fields');
       return;
     }
 
-    let updated = [...products];
+    setUploading(true);
 
-    if (view === 'add') {
-      const newProduct = {
-        id: Date.now().toString(),
-        ...formData,
-        price: parseFloat(formData.price),
-        quantity: parseInt(formData.quantity, 10),
-        reorderLevel: parseInt(formData.reorderLevel, 10),
-        createdAt: new Date().toISOString()
-      };
-      updated.push(newProduct);
-    } else if (view === 'edit' && editingProduct) {
-      updated = updated.map(p =>
-        p.id === editingProduct.id
-          ? {
-              ...p,
-              ...formData,
-              price: parseFloat(formData.price),
-              quantity: parseInt(formData.quantity, 10),
-              reorderLevel: parseInt(formData.reorderLevel, 10),
-              updatedAt: new Date().toISOString()
-            }
-          : p
-      );
+    try {
+      let imageUrl = formData.imageUrl; // Use existing URL if not changing
+
+      // Upload new image if selected
+      if (formData.imageFile) {
+        // Delete old image if editing
+        if (view === 'edit' && editingProduct?.imageUrl) {
+          await deleteProductImage(editingProduct.imageUrl);
+        }
+
+        // Upload new image
+        const { url, error } = await uploadProductImage(formData.imageFile, formData.name);
+        if (error) {
+          alert(`Image upload failed: ${error}`);
+          setUploading(false);
+          return;
+        }
+        imageUrl = url;
+      }
+
+      let updated = [...products];
+
+      if (view === 'add') {
+        const newProduct = {
+          id: Date.now().toString(),
+          name: formData.name,
+          category: formData.category,
+          price: parseFloat(formData.price),
+          quantity: parseInt(formData.quantity, 10),
+          reorderLevel: parseInt(formData.reorderLevel, 10),
+          expiryDate: formData.expiryDate,
+          description: formData.description,
+          imageUrl: imageUrl,
+          createdAt: new Date().toISOString()
+        };
+        updated.push(newProduct);
+      } else if (view === 'edit' && editingProduct) {
+        updated = updated.map(p =>
+          p.id === editingProduct.id
+            ? {
+                ...p,
+                name: formData.name,
+                category: formData.category,
+                price: parseFloat(formData.price),
+                quantity: parseInt(formData.quantity, 10),
+                reorderLevel: parseInt(formData.reorderLevel, 10),
+                expiryDate: formData.expiryDate,
+                description: formData.description,
+                imageUrl: imageUrl || p.imageUrl,
+                updatedAt: new Date().toISOString()
+              }
+            : p
+        );
+      }
+
+      localStorage.setItem('inventoryProducts', JSON.stringify(updated));
+      setProducts(updated);
+      resetForm();
+      setView('list');
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Error saving product. Please try again.');
+    } finally {
+      setUploading(false);
     }
-
-    localStorage.setItem('inventoryProducts', JSON.stringify(updated));
-    setProducts(updated);
-    resetForm();
-    setView('list');
   };
 
-  const deleteProduct = () => {
+  const deleteProduct = async () => {
     if (!deleteConfirm) return;
     
-    const updated = products.filter(p => p.id !== deleteConfirm.id);
-    localStorage.setItem('inventoryProducts', JSON.stringify(updated));
-    setProducts(updated);
-    setDeleteConfirm(null);
+    try {
+      // Delete image from Supabase if exists
+      if (deleteConfirm.imageUrl) {
+        await deleteProductImage(deleteConfirm.imageUrl);
+      }
+      
+      const updated = products.filter(p => p.id !== deleteConfirm.id);
+      localStorage.setItem('inventoryProducts', JSON.stringify(updated));
+      setProducts(updated);
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Error deleting product image. Product deleted but image may remain in storage.');
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
+        return;
+      }
+      
+      // Create preview for display
+      const reader = new FileReader();
+      reader.onload = () => {
+        setFormData((prev) => ({
+          ...prev,
+          imageFile: file,
+          imagePreview: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset the input value so same file can be selected again
+    e.target.value = '';
+  };
+
+  const handleImageButtonClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('product-image-file-input')?.click();
   };
 
   const handleEdit = (product) => {
@@ -104,7 +185,10 @@ const AdminInventory = () => {
       quantity: product.quantity,
       reorderLevel: product.reorderLevel,
       expiryDate: product.expiryDate || '',
-      description: product.description || ''
+      description: product.description || '',
+      imageFile: null,
+      imagePreview: product.imageUrl || null,
+      imageUrl: product.imageUrl || null
     });
     setView('edit');
   };
@@ -141,7 +225,10 @@ const AdminInventory = () => {
       quantity: 0,
       reorderLevel: '',
       expiryDate: '',
-      description: ''
+      description: '',
+      imageFile: null,
+      imagePreview: null,
+      imageUrl: null
     });
     setEditingProduct(null);
   };
@@ -304,12 +391,46 @@ const AdminInventory = () => {
               />
             </div>
 
+            <div className="form-group full-width">
+              <label>Product Image</label>
+              <div className="image-upload-section">
+                <div className="image-input-wrapper">
+                  <input
+                    id="product-image-file-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    className="image-upload-label"
+                    onClick={handleImageButtonClick}
+                  >
+                    📸 Choose Image
+                  </button>
+                </div>
+                {formData.imagePreview && (
+                  <div className="image-preview-container">
+                    <img src={formData.imagePreview} alt="Product preview" className="image-preview" />
+                    <button
+                      type="button"
+                      className="btn-remove-image"
+                      onClick={() => setFormData((prev) => ({ ...prev, image: null, imagePreview: null }))}
+                    >
+                      ✕ Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="form-actions">
               <button className="btn-secondary" onClick={() => { resetForm(); setView('list'); }}>
                 Cancel
               </button>
-              <button className="btn-primary" onClick={saveProduct}>
-                {view === 'add' ? 'Save Product' : 'Update Product'}
+              <button className="btn-primary" onClick={saveProduct} disabled={uploading}>
+                {uploading ? 'Uploading...' : (view === 'add' ? 'Save Product' : 'Update Product')}
               </button>
             </div>
           </div>
@@ -426,6 +547,7 @@ const AdminInventory = () => {
             <table className="products-table">
               <thead>
                 <tr>
+                  <th>Image</th>
                   <th>ID</th>
                   <th>Product Name</th>
                   <th>Category</th>
@@ -447,6 +569,13 @@ const AdminInventory = () => {
 
                     return (
                       <tr key={product.id}>
+                        <td className="product-image-cell">
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="product-thumbnail" />
+                          ) : (
+                            <div className="product-thumbnail-placeholder">📷</div>
+                          )}
+                        </td>
                         <td className="product-id">{product.id.slice(-6).toUpperCase()}</td>
                         <td className="product-name">{product.name}</td>
                         <td><span className="badge badge-gray">{product.category}</span></td>

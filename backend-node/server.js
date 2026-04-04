@@ -33,7 +33,15 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'http://localhost:3004',
+    'http://localhost:3005',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true
 }));
 
@@ -59,6 +67,83 @@ app.get('/api/health', (req, res) => {
     message: 'Server is running',
     timestamp: new Date().toISOString()
   });
+});
+
+// Test seed endpoint - Create test accounts for development
+app.post('/api/seed-test-accounts', async (req, res) => {
+  try {
+    const User = (await import('./models/User.js')).default;
+    const Admin = (await import('./models/Admin.js')).default;
+    const Trainer = (await import('./models/Trainer.js')).default;
+
+    // Test user
+    const testUser = await User.findOneAndUpdate(
+      { email: 'testuser@example.com' },
+      {
+        name: 'Test User',
+        email: 'testuser@example.com',
+        password: 'password123',
+        phone: '1234567890',
+        membershipStatus: 'active'
+      },
+      { upsert: true, new: true }
+    );
+
+    // Test admin
+    const testAdmin = await Admin.findOneAndUpdate(
+      { email: 'testadmin@example.com' },
+      {
+        name: 'Test Admin',
+        email: 'testadmin@example.com',
+        password: 'admin123',
+        phone: '0987654321',
+        role: 'admin'
+      },
+      { upsert: true, new: true }
+    );
+
+    // Test trainer
+    const testTrainer = await Trainer.findOneAndUpdate(
+      { email: 'testtrainer@example.com' },
+      {
+        name: 'Test Trainer',
+        email: 'testtrainer@example.com',
+        password: 'trainer123',
+        phone: '5555555555',
+        specialization: 'Strength Training',
+        experience: 5
+      },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Test accounts created successfully',
+      accounts: [
+        {
+          role: 'User',
+          email: 'testuser@example.com',
+          password: 'password123'
+        },
+        {
+          role: 'Admin',
+          email: 'testadmin@example.com',
+          password: 'admin123'
+        },
+        {
+          role: 'Trainer',
+          email: 'testtrainer@example.com',
+          password: 'trainer123'
+        }
+      ]
+    });
+  } catch (error) {
+    console.error('Seed error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 });
 
 // Auth routes

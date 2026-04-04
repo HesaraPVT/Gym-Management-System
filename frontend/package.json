@@ -4,7 +4,7 @@
   "description": "Gym Progress Tracker - Track body stats, measurements, and workouts",
   "private": true,
   "dependencies": {
-    "axios": "^1.14.0",
+    "@supabase/supabase-js": "^2.101.1",
     "chart.js": "^4.4.0",
     "date-fns": "^2.30.0",
     "leaflet": "^1.9.4",

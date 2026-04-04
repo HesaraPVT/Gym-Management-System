@@ -488,7 +488,6 @@ export default Checkout;*/
 
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // Using navigate for better flow
 import './Checkout.css';
 import ShopHeader from '../components/common/ShopHeader';
@@ -572,13 +571,16 @@ function Checkout() {
       }
 
       // 3. API Call
-      const response = await axios.post('http://localhost:5000/api/shop/orders', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await fetch('http://localhost:5001/api/shop/orders', {
+        method: 'POST',
+        body: formData
       });
 
+      const data = await response.json();
+
       // 4. Success Logic
-      if (response.data) {
-        const newId = response.data._id || response.data.order?._id;
+      if (data) {
+        const newId = data._id || data.order?._id;
         setOrderId(newId);
         localStorage.setItem("lastOrderId", newId); 
         
@@ -590,8 +592,8 @@ function Checkout() {
         alert(selectedPayment === "CARD" ? "Card Payment Authorized! Order placed." : "Order placed successfully!");
       }
     } catch (error) {
-      console.error("Order Submission Error:", error.response?.data || error.message);
-      alert("Error placing order: " + (error.response?.data?.message || "Server connection failed"));
+      console.error("Order Submission Error:", error.message);
+      alert("Error placing order: " + (error.message || "Server connection failed"));
     } finally {
       setLoading(false);
     }

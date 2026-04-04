@@ -19,7 +19,8 @@ function AdminMemberships() {
     activeMembers: 0,
     features: [''],
     status: 'Active',
-    popular: false
+    popular: false,
+    color: '#0ea5e9'
   });
 
   useEffect(() => {
@@ -68,12 +69,27 @@ function AdminMemberships() {
     setSubscriptions(savedSubscriptions);
   }, []);
 
+  const colorOptions = [
+    '#0ea5e9', // Blue
+    '#f43f5e', // Red/Pink
+    '#f59e0b', // Orange
+    '#a855f7', // Purple
+    '#10b981', // Green
+    '#ef4444', // Red
+    '#06b6d4', // Cyan
+    '#ec4899'  // Pink
+  ];
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value
     });
+  };
+
+  const handleColorChange = (color) => {
+    setFormData({ ...formData, color });
   };
 
   const handleFeatureChange = (index, value) => {
@@ -114,8 +130,7 @@ function AdminMemberships() {
         {
           id: Date.now(),
           ...formData,
-          features: filteredFeatures,
-          color: ['#0ea5e9', '#f43f5e', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444'][Math.floor(Math.random() * 6)]
+          features: filteredFeatures
         }
       ];
     }
@@ -134,7 +149,8 @@ function AdminMemberships() {
       activeMembers: 0,
       features: [''],
       status: 'Active',
-      popular: false
+      popular: false,
+      color: '#0ea5e9'
     });
     setEditingId(null);
     setShowModal(false);
@@ -462,6 +478,21 @@ function AdminMemberships() {
                   <option>Active</option>
                   <option>Inactive</option>
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label>Accent Color</label>
+                <div className="color-picker">
+                  {colorOptions.map((color) => (
+                    <button
+                      key={color}
+                      className={`color-option ${formData.color === color ? 'selected' : ''}`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => handleColorChange(color)}
+                      title={color}
+                    />
+                  ))}
+                </div>
               </div>
 
               <div className="form-group">

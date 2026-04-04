@@ -209,7 +209,7 @@ function AdminOrderTracking() {
   const [activeTrackingId, setActiveTrackingId] = useState(null);
   const watchIdRef = useRef(null);
 
-  const API_BASE = "http://localhost:5000";
+  const API_BASE = "http://localhost:5001";
 
   const fetchOrders = async () => {
     try {
@@ -447,7 +447,7 @@ function AdminOrderTracking() {
   const [activeTrackingId, setActiveTrackingId] = useState(null);
   const watchIdRef = useRef(null);
 
-  const API_BASE = "http://localhost:5000";
+  const API_BASE = "http://localhost:5001";
 
   const fetchOrders = async () => {
     try {
@@ -628,8 +628,8 @@ function AdminOrderTracking() {
   const watchIdRef = useRef(null);
 
   // FIXED: Your backend prefix is /api/shop
-  const API_BASE = "http://localhost:5000/api/shop";
-  const IMAGE_BASE = "http://localhost:5000";
+  const API_BASE = "http://localhost:5001/api/shop";
+  const IMAGE_BASE = "http://localhost:5001";
 
   const fetchOrders = async () => {
     try {
@@ -898,8 +898,8 @@ function AdminOrderTracking() {
   const [activeTrackingId, setActiveTrackingId] = useState(null);
   const watchIdRef = useRef(null);
 
-  const API_BASE = "http://localhost:5000/api/shop";
-  const IMAGE_BASE = "http://localhost:5000";
+  const API_BASE = "http://localhost:5001/api/shop";
+  const IMAGE_BASE = "http://localhost:5001";
 
   const fetchOrders = async () => {
     try {
@@ -1181,7 +1181,6 @@ export default AdminOrderTracking;*/
 
 
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
 import ShopHeader from '../common/ShopHeader';
 
 function AdminOrderTracking() {
@@ -1191,13 +1190,14 @@ function AdminOrderTracking() {
   const [activeTrackingId, setActiveTrackingId] = useState(null);
   const watchIdRef = useRef(null);
 
-  const API_BASE = "http://localhost:5000/api/shop";
-  const IMAGE_BASE = "http://localhost:5000";
+  const API_BASE = "http://localhost:5001/api/shop";
+  const IMAGE_BASE = "http://localhost:5001";
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/admin/orders`);
-      setOrders(res.data.orders || []);
+      const res = await fetch(`${API_BASE}/admin/orders`);
+      const data = await res.json();
+      setOrders(data.orders || []);
       setLoading(false);
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -1218,8 +1218,12 @@ function AdminOrderTracking() {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          await axios.patch(`${API_BASE}/order/${orderId}`, {
-            riderLocation: { lat: latitude, lng: longitude }
+          await fetch(`${API_BASE}/order/${orderId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              riderLocation: { lat: latitude, lng: longitude }
+            })
           });
           fetchOrders(); 
         } catch (err) {
@@ -1277,7 +1281,11 @@ function AdminOrderTracking() {
           updateData.paymentStatus = "Completed";
         }
       }
-      await axios.patch(`${API_BASE}/order/${id}`, updateData);
+      await fetch(`${API_BASE}/order/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
       fetchOrders();
     } catch (err) { alert("Update failed"); }
   };

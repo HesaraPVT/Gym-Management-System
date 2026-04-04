@@ -151,7 +151,7 @@ export default UserShopPage;*/
 
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './UserShopPage.css';
 import ShopHeader from '../common/ShopHeader';
 import wheyImage from '../../images/whey.jpg';
@@ -166,8 +166,56 @@ import preworkoutImage from '../../images/preworkout.jpg';
 function UserShopPage() {
   const [cart, setCart] = useState(JSON.parse(localStorage.getItem('cart')) || []);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [shopProducts, setShopProducts] = useState([]);
 
-  const products = [
+  // Load inventory products on component mount and when inventory changes
+  useEffect(() => {
+    loadShopProducts();
+    
+    // Set up interval to check for changes every 2 seconds
+    const interval = setInterval(loadShopProducts, 2000);
+    
+    // Also listen for storage changes (from other tabs/windows)
+    window.addEventListener('storage', loadShopProducts);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', loadShopProducts);
+    };
+  }, []);
+
+  const isProductExpired = (expiryDate) => {
+    if (!expiryDate) return false;
+    const now = new Date();
+    const expiry = new Date(expiryDate);
+    return expiry < now;
+  };
+
+  const loadShopProducts = () => {
+    try {
+      const inventoryData = localStorage.getItem('inventoryProducts');
+      if (inventoryData) {
+        const allProducts = JSON.parse(inventoryData);
+        
+        // Filter: Keep only products with stock > 0 and not expired
+        const availableProducts = allProducts.filter(product => {
+          const hasStock = product.quantity && product.quantity > 0;
+          const notExpired = !isProductExpired(product.expiryDate);
+          return hasStock && notExpired;
+        });
+        
+        setShopProducts(availableProducts);
+      } else {
+        setShopProducts([]);
+      }
+    } catch (error) {
+      console.error('Failed to load shop products from inventory:', error);
+      setShopProducts([]);
+    }
+  };
+
+  // Fallback hardcoded products (for demo if no inventory items)
+  const fallbackProducts = [
     {
       id: 1,
       name: 'Whey Protein',
@@ -254,8 +302,29 @@ function UserShopPage() {
       updatedCart = [...cart, { ...product, quantity: 1 }];
     }
     
+    // Update cart
     setCart(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
+    
+    // Deduct stock from inventory
+    try {
+      const inventoryData = localStorage.getItem('inventoryProducts');
+      if (inventoryData) {
+        const allProducts = JSON.parse(inventoryData);
+        const updatedInventory = allProducts.map(p =>
+          p.id === product.id
+            ? { ...p, quantity: Math.max(0, p.quantity - 1) }
+            : p
+        );
+        localStorage.setItem('inventoryProducts', JSON.stringify(updatedInventory));
+        
+        // Reload shop products to reflect stock changes
+        loadShopProducts();
+      }
+    } catch (error) {
+      console.error('Error updating inventory:', error);
+    }
+    
     alert(`${product.name} added to cart!`);
   };
 
@@ -274,47 +343,110 @@ function UserShopPage() {
       <div className="shop-container">
         <div className="collection-header">
           <h2>OUR <span>COLLECTION</span></h2>
+          {shopProducts.length === 0 && (
+            <p style={{ color: '#818284', fontSize: '14px', marginTop: '10px' }}>
+              No products available at the moment
+            </p>
+          )}
         </div>
 
         <div className="products-grid">
-          {products.map((product) => (
-            <div key={product.id} className="product-card">
-              <div className="product-image">
-                <img src={product.image} alt={product.name} />
-              </div>
-              
-              <div className="product-info">
-                <h3>{product.name}</h3>
-                <p>{product.description}</p>
+          {shopProducts.length > 0 ? (
+            shopProducts.map((product) => (
+              <div key={product.id} className="product-card">
+                <div className="product-image">
+                  {product.imageUrl ? (
+                    <img src={product.imageUrl} alt={product.name} />
+                  ) : (
+                    <div style={{ 
+                      width: '100%', 
+                      height: '200px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      backgroundColor: '#f0f0f0'
+                    }}>
+                      📦
+                    </div>
+                  )}
+                </div>
                 
-                <div className="product-footer">
-                  <div className="product-price">Rs. {product.price.toLocaleString()}</div>
-                  <button className="add-to-cart-btn" onClick={() => handleAddToCart(product)}>
-                    Add to Cart
+                <div className="product-info">
+                  <h3>{product.name}</h3>
+                  <p>{product.description || 'Premium supplement product'}</p>
+                  
+                  <div className="product-footer">
+                    <div className="product-price">Rs. {product.price.toLocaleString()}</div>
+                    <button 
+                      className="add-to-cart-btn" 
+                      onClick={() => handleAddToCart(product)}
+                      disabled={product.quantity <= 0}
+                    >
+                      {product.quantity > 0 ? 'Add to Cart' : 'Out of Stock'}
+                    </button>
+                  </div>
+
+                  <button 
+                    className="how-to-use-btn" 
+                    onClick={() => setSelectedProduct(product)}
+                  >
+                    Details
                   </button>
                 </div>
-
-                <button 
-                  className="how-to-use-btn" 
-                  onClick={() => setSelectedProduct(product)}
-                >
-                  How to use?
-                </button>
               </div>
+            ))
+          ) : (
+            <div style={{ 
+              gridColumn: '1 / -1', 
+              textAlign: 'center', 
+              padding: '40px',
+              color: '#818284'
+            }}>
+              <p>No products available at the moment</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* HOW TO USE MODAL */}
+      {/* PRODUCT DETAILS MODAL */}
       {selectedProduct && (
         <div className="modal-overlay" onClick={() => setSelectedProduct(null)}>
           <div className="usage-modal" onClick={(e) => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setSelectedProduct(null)}>&times;</button>
-            <img src={selectedProduct.image} alt={selectedProduct.name} className="modal-img" />
+            {selectedProduct.imageUrl ? (
+              <img src={selectedProduct.imageUrl} alt={selectedProduct.name} className="modal-img" />
+            ) : (
+              <div style={{
+                width: '100%',
+                height: '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f0f0f0',
+                marginBottom: '20px'
+              }}>📦</div>
+            )}
             <h2>{selectedProduct.name}</h2>
-            <h3>Instructions:</h3>
-            <p>{selectedProduct.howToUse}</p>
+            <div style={{ marginBottom: '15px', fontSize: '14px', color: '#666' }}>
+              <p><strong>Price:</strong> Rs. {selectedProduct.price?.toLocaleString() || 'N/A'}</p>
+              <p><strong>Category:</strong> {selectedProduct.category || 'Supplement'}</p>
+              <p><strong>Stock:</strong> {selectedProduct.quantity} units</p>
+              {selectedProduct.expiryDate && (
+                <p><strong>Expiry:</strong> {new Date(selectedProduct.expiryDate).toLocaleDateString()}</p>
+              )}
+            </div>
+            {selectedProduct.howToUse && (
+              <>
+                <h3>Instructions:</h3>
+                <p>{selectedProduct.howToUse}</p>
+              </>
+            )}
+            {selectedProduct.description && (
+              <>
+                <h3>About:</h3>
+                <p>{selectedProduct.description}</p>
+              </>
+            )}
             <div className="modal-tip">
               <strong>Tip:</strong> Drink plenty of water when taking supplements!
             </div>

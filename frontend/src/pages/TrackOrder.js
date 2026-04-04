@@ -474,10 +474,7 @@ export default TrackOrder;*/
 
 
 
-
-
 import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -501,7 +498,7 @@ function TrackOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const API_BASE = "http://localhost:5000/api/shop";
+  const API_BASE = "http://localhost:5001/api/shop";
 
   const fetchOrder = useCallback(async () => {
     const orderId = id || localStorage.getItem("lastOrderId");
@@ -510,8 +507,9 @@ function TrackOrder() {
       return;
     }
     try {
-      const res = await axios.get(`${API_BASE}/order/${orderId}?t=${Date.now()}`);
-      setOrder(res.data);
+      const res = await fetch(`${API_BASE}/order/${orderId}?t=${Date.now()}`);
+      const data = await res.json();
+      setOrder(data);
       setError("");
     } catch (err) {
       setError("Order not found.");
@@ -526,10 +524,15 @@ function TrackOrder() {
 
     try {
       setIsUploading(true);
-      await axios.patch(`${API_BASE}/order/${order._id}`, formData);
-      alert("Slip re-uploaded! Admin will verify it shortly.");
-      setNewSlip(null);
-      fetchOrder(); 
+      const res = await fetch(`${API_BASE}/order/${order._id}`, {
+        method: 'PATCH',
+        body: formData
+      });
+      if (res.ok) {
+        alert("Slip re-uploaded! Admin will verify it shortly.");
+        setNewSlip(null);
+        fetchOrder();
+      }
     } catch (err) {
       alert("Failed to upload slip.");
     } finally {
@@ -540,12 +543,19 @@ function TrackOrder() {
   const handleDeleteOrder = async () => {
     if (window.confirm("Are you sure you want to cancel this order?")) {
       try {
-        await axios.delete(`${API_BASE}/order/${order._id}`);
-        alert("Order cancelled.");
-        localStorage.removeItem("lastOrderId");
-        navigate("/products");
+        const res = await fetch(`${API_BASE}/order/${order._id}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          alert("Order cancelled.");
+          localStorage.removeItem("lastOrderId");
+          navigate("/products");
+        } else {
+          const data = await res.json();
+          alert(data?.message || "Error deleting order.");
+        }
       } catch (err) {
-        alert(err.response?.data?.message || "Error deleting order.");
+        alert("Error deleting order.");
       }
     }
   };
