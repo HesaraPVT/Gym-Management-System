@@ -1,61 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import './TrainerHome.css';
 
+const API_BASE = 'http://localhost:5000/api';
+
 function TrainerHome() {
   const [trainerName, setTrainerName] = useState('');
   const [stats, setStats] = useState({
-    totalSessions: 24,
-    completedSessions: 18,
-    upcomingBookings: 5,
-    totalEarnings: 12500
+    totalSessions: 0,
+    completedSessions: 0,
+    upcomingBookings: 0,
+    totalEarnings: 0
   });
   const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+  };
 
   useEffect(() => {
-    // Get trainer name from localStorage
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    setTrainerName(user.name || 'Trainer');
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
 
-    // Mock upcoming sessions
-    const today = new Date();
-    const mockSessions = [
-      {
-        id: 1,
-        studentName: 'John Doe',
-        category: 'Strength Training',
-        dateTime: new Date(today.getTime() + 2 * 60 * 60 * 1000),
-        duration: '60 mins'
-      },
-      {
-        id: 2,
-        studentName: 'Jane Smith',
-        category: 'Yoga',
-        dateTime: new Date(today.getTime() + 4 * 60 * 60 * 1000),
-        duration: '45 mins'
-      },
-      {
-        id: 3,
-        studentName: 'Mike Johnson',
-        category: 'Cardio',
-        dateTime: new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000),
-        duration: '60 mins'
-      },
-      {
-        id: 4,
-        studentName: 'Sarah Williams',
-        category: 'Strength Training',
-        dateTime: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000),
-        duration: '60 mins'
-      },
-      {
-        id: 5,
-        studentName: 'Tom Brown',
-        category: 'Flexibility',
-        dateTime: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000),
-        duration: '50 mins'
+        // Get trainer info from localStorage
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        setTrainerName(user.name || 'Trainer');
+
+        // Fetch dashboard stats
+        const statsRes = await fetch(`${API_BASE}/trainers/dashboard-stats`, {
+          headers: getAuthHeaders()
+        });
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          if (statsData.success) {
+            setStats(statsData.stats);
+          }
+        }
+
+        // Fetch upcoming sessions
+        const sessionsRes = await fetch(`${API_BASE}/trainers/upcoming-sessions`, {
+          headers: getAuthHeaders()
+        });
+
+        if (sessionsRes.ok) {
+          const sessionsData = await sessionsRes.json();
+          if (sessionsData.success) {
+            setUpcomingSessions(sessionsData.sessions);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
       }
-    ];
-    setUpcomingSessions(mockSessions.sort((a, b) => a.dateTime - b.dateTime));
+    };
+
+    fetchDashboardData();
   }, []);
 
   const getCategoryColor = (category) => {
@@ -71,13 +78,22 @@ function TrainerHome() {
   };
 
   const formatDateTime = (date) => {
-    return date.toLocaleString('en-US', {
+    return new Date(date).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
     });
+  };
+
+  const handleSessionAction = async (sessionId, action) => {
+    try {
+      console.log(`${action} session:`, sessionId);
+      alert(`${action} functionality will be implemented`);
+    } catch (error) {
+      console.error(`Error ${action}ing session:`, error);
+    }
   };
 
   return (
@@ -87,19 +103,19 @@ function TrainerHome() {
       {/* Stats Grid */}
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-value">{stats.totalSessions}</div>
+          <div className="stat-value">{loading ? '...' : stats.totalSessions}</div>
           <div className="stat-label">Total Sessions</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.completedSessions}</div>
+          <div className="stat-value">{loading ? '...' : stats.completedSessions}</div>
           <div className="stat-label">Completed</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{stats.upcomingBookings}</div>
+          <div className="stat-value">{loading ? '...' : stats.upcomingBookings}</div>
           <div className="stat-label">Upcoming Bookings</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">${(stats.totalEarnings / 1000).toFixed(1)}K</div>
+          <div className="stat-value">{loading ? '...' : `$${(stats.totalEarnings / 1000).toFixed(1)}K`}</div>
           <div className="stat-label">Total Earnings</div>
         </div>
       </div>
@@ -108,28 +124,45 @@ function TrainerHome() {
       <div className="upcoming-sessions">
         <h2>Your Upcoming Sessions</h2>
         <div className="sessions-container">
-          {upcomingSessions.length > 0 ? (
-            upcomingSessions.map((session) => (
-              <div key={session.id} className="session-card">
-                <div className="session-header">
-                  <h3>{session.studentName}</h3>
-                  <span 
-                    className="category-badge"
-                    style={{ backgroundColor: getCategoryColor(session.category) }}
-                  >
-                    {session.category}
-                  </span>
+          {loading ? (
+            <p className="loading-text">Loading sessions...</p>
+          ) : upcomingSessions.length > 0 ? (
+            upcomingSessions.map((session) => {
+              const startDate = new Date(session.startTime);
+              const endDate = new Date(session.endTime);
+              const durationMs = endDate - startDate;
+              const durationMins = Math.floor(durationMs / 60000);
+
+              return (
+                <div key={session._id} className="session-card">
+                  <div className="session-header">
+                    <h3>{session.enrolledMembers?.[0]?.name || 'Student'}</h3>
+                    <span 
+                      className="category-badge"
+                      style={{ backgroundColor: getCategoryColor(session.sessionType) }}
+                    >
+                      {session.sessionType}
+                    </span>
+                  </div>
+                  <p className="session-time">📅 {formatDateTime(session.startTime)}</p>
+                  <p className="session-duration">⏱️ {durationMins} mins</p>
+                  <p className="session-title">📝 {session.title}</p>
+                  <p className="enrolled-count">
+                    👥 {session.enrolledMembers?.length || 0} / {session.maxParticipants} enrolled
+                  </p>
+                  <div className="session-actions">
+                    <button 
+                      className="btn-confirm"
+                      onClick={() => handleSessionAction(session._id, 'confirm')}
+                    >
+                      Confirm
+                    </button>
+                  </div>
                 </div>
-                <p className="session-time">📅 {formatDateTime(session.dateTime)}</p>
-                <p className="session-duration">⏱️ {session.duration}</p>
-                <div className="session-actions">
-                  <button className="btn-confirm">Confirm</button>
-                  <button className="btn-message">Message</button>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <p className="no-sessions">No upcoming sessions</p>
+            <p className="no-sessions">No upcoming sessions with enrolled members</p>
           )}
         </div>
       </div>

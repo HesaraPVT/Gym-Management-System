@@ -56,7 +56,7 @@ function TrainerSignin() {
       }
 
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(data.trainer || data.user));
       localStorage.setItem('role', 'trainer');
 
       toast.success('Login successful!');

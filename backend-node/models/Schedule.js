@@ -39,6 +39,19 @@ const scheduleSchema = new mongoose.Schema({
     enum: ['Scheduled', 'InProgress', 'Completed', 'Cancelled'],
     default: 'Scheduled'
   },
+  isRecurring: {
+    type: Boolean,
+    default: false
+  },
+  recurringFrequency: {
+    type: String,
+    enum: ['daily', 'weekly', 'biweekly'],
+    default: null
+  },
+  recurringSessionIndex: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now

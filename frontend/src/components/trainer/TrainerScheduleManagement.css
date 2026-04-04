@@ -105,8 +105,9 @@
 
 .time-input-group {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto auto auto auto;
   gap: 8px;
+  align-items: center;
 }
 
 .time-input-group input {
@@ -116,7 +117,17 @@
 }
 
 .time-input-group select {
-  min-width: 70px;
+  min-width: 60px;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 14px;
+}
+
+.time-colon {
+  font-weight: bold;
+  color: #333;
 }
 
 .checkbox-group label {
@@ -367,6 +378,7 @@
 .booking-status {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .status-badge {
@@ -391,6 +403,69 @@
 .status-badge.cancelled {
   background: #ffebee;
   color: #c62828;
+}
+
+.btn-chat {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-chat:hover {
+  background: #f0f0f0;
+  transform: scale(1.1);
+}
+
+/* Cancel Button */
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.cancel-btn:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Edit Button */
+.edit-btn {
+  background: #ffc107;
+  color: #212529;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 5px;
+  transition: all 0.3s ease;
+}
+
+.edit-btn:hover {
+  background: #e0a800;
+  transform: translateY(-1px);
+}
+
+.edit-btn:disabled {
+  background: #ffeaa7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Responsive Design */

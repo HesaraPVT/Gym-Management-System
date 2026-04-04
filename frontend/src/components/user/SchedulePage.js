@@ -7,6 +7,8 @@ import TrainerProfileModal from '../common/TrainerProfileModal';
 import BookingConfirmationModal from '../common/BookingConfirmationModal';
 import ChatBox from '../common/ChatBox';
 
+const API_BASE = 'http://localhost:5000/api';
+
 const SchedulePage = () => {
   const [availabilities, setAvailabilities] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -25,139 +27,96 @@ const SchedulePage = () => {
 
   // Chat
   const [chatUser, setChatUser] = useState(null);
+  const [chatScheduleId, setChatScheduleId] = useState(null);
   const [unreadCounts, setUnreadCounts] = useState({});
 
-  // Mock fetch data (replace with actual API calls)
+  // Helper to get auth header
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+  };
+
+  // Helper to map a schedule from the DB into the shape the UI expects
+  const mapScheduleToAvailability = (schedule) => {
+    const trainerObj = schedule.trainerId;
+    const trainerName = typeof trainerObj === 'object' && trainerObj
+      ? trainerObj.name
+      : 'Unknown Trainer';
+    const trainerId = typeof trainerObj === 'object' && trainerObj
+      ? trainerObj._id
+      : trainerObj;
+
+    const enrolled = schedule.enrolledMembers ? schedule.enrolledMembers.length : 0;
+    const max = schedule.maxParticipants || 1;
+
+    return {
+      _id: schedule._id,
+      trainer_id: trainerId,
+      trainer_name: trainerName,
+      session_title: schedule.title || 'Training Session',
+      session_category: schedule.sessionType || 'General',
+      session_type: max > 1 ? 'Group' : 'Individual',
+      start_time: schedule.startTime,
+      end_time: schedule.endTime,
+      max_participants: max,
+      spots_left: Math.max(0, max - enrolled),
+      rating: 4.8
+    };
+  };
+
+  // Helper to map a schedule into a booking shape
+  const mapScheduleToBooking = (schedule) => {
+    const trainerObj = schedule.trainerId;
+    const trainerName = typeof trainerObj === 'object' && trainerObj
+      ? trainerObj.name
+      : 'Unknown Trainer';
+    const trainerId = typeof trainerObj === 'object' && trainerObj
+      ? trainerObj._id
+      : trainerObj;
+
+    return {
+      _id: schedule._id,
+      availability_id: schedule._id,
+      trainer_id: trainerId,
+      trainer_name: trainerName,
+      start_time: schedule.startTime,
+      end_time: schedule.endTime,
+      time_changed: false
+    };
+  };
+
+  // Fetch all available schedules and user's bookings from the database
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Mock data for demo - replace with actual API calls
-      const mockAvailabilities = [
-        {
-          _id: '1',
-          trainer_id: 'trainer-1',
-          trainer_name: 'praveen',
-          session_title: 'Training Session',
-          session_category: 'General',
-          session_type: 'Individual',
-          start_time: new Date(2026, 3, 30, 13, 0).toISOString(),
-          end_time: new Date(2026, 3, 30, 14, 0).toISOString(),
-          max_participants: 1,
-          spots_left: 1,
-          rating: 4.8
-        },
-        {
-          _id: '2',
-          trainer_id: 'trainer-2',
-          trainer_name: 'sayash perera',
-          session_title: 'Morning schedule',
-          session_category: 'Personal Training',
-          session_type: 'Group',
-          start_time: new Date(2026, 3, 31, 4, 0).toISOString(),
-          end_time: new Date(2026, 3, 31, 6, 0).toISOString(),
-          max_participants: 12,
-          spots_left: 4,
-          rating: 4.8
-        },
-        {
-          _id: '3',
-          trainer_id: 'trainer-3',
-          trainer_name: 'Himaya Ranawaka',
-          session_title: 'Training Session',
-          session_category: 'General',
-          session_type: 'Individual',
-          start_time: new Date(2026, 4, 2, 6, 0).toISOString(),
-          end_time: new Date(2026, 4, 2, 8, 0).toISOString(),
-          max_participants: 1,
-          spots_left: 1,
-          rating: 4.8
-        },
-        {
-          _id: '4',
-          trainer_id: 'trainer-1',
-          trainer_name: 'Himaya Ranawaka',
-          session_title: 'General Session',
-          session_category: 'General',
-          session_type: 'Individual',
-          start_time: new Date(2026, 4, 3, 8, 0).toISOString(),
-          end_time: new Date(2026, 4, 3, 10, 0).toISOString(),
-          max_participants: 1,
-          spots_left: 1,
-          rating: 4.8
-        },
-        {
-          _id: '5',
-          trainer_id: 'trainer-2',
-          trainer_name: 'praveen',
-          session_title: 'Weekend Blast',
-          session_category: 'Strength',
-          session_type: 'Group',
-          start_time: new Date(2026, 4, 4, 7, 0).toISOString(),
-          end_time: new Date(2026, 4, 4, 9, 0).toISOString(),
-          max_participants: 15,
-          spots_left: 1,
-          rating: 4.8
-        },
-        {
-          _id: '6',
-          trainer_id: 'trainer-3',
-          trainer_name: 'praveen',
-          session_title: 'Weekend Blast',
-          session_category: 'Strength',
-          session_type: 'Group',
-          start_time: new Date(2026, 4, 5, 7, 0).toISOString(),
-          end_time: new Date(2026, 4, 5, 9, 0).toISOString(),
-          max_participants: 15,
-          spots_left: 1,
-          rating: 4.8
-        },
-        {
-          _id: '7',
-          trainer_id: 'trainer-1',
-          trainer_name: 'sayash perera',
-          session_title: 'General Session',
-          session_category: 'General',
-          session_type: 'Individual',
-          start_time: new Date(2026, 4, 1, 8, 0).toISOString(),
-          end_time: new Date(2026, 4, 1, 9, 0).toISOString(),
-          max_participants: 1,
-          spots_left: 0,
-          rating: 4.8
-        }
-      ];
+      // Fetch all schedules
+      const schedulesRes = await fetch(`${API_BASE}/schedule`, {
+        headers: getAuthHeaders()
+      });
+      const schedulesData = await schedulesRes.json();
 
-      const mockBookings = [
-        {
-          _id: 'booking-1',
-          availability_id: '1',
-          trainer_id: 'trainer-1',
-          trainer_name: 'Himaya Ranawaka',
-          start_time: new Date(2026, 3, 3, 8, 0).toISOString(),
-          end_time: new Date(2026, 3, 3, 11, 0).toISOString(),
-          time_changed: true
-        },
-        {
-          _id: 'booking-2',
-          availability_id: '2',
-          trainer_id: 'trainer-2',
-          trainer_name: 'praveen',
-          start_time: new Date(2026, 3, 10, 13, 0).toISOString(),
-          end_time: new Date(2026, 3, 10, 16, 0).toISOString(),
-          time_changed: false
-        },
-        {
-          _id: 'booking-3',
-          availability_id: '3',
-          trainer_id: 'trainer-3',
-          trainer_name: 'sayash perera',
-          start_time: new Date(2026, 4, 1, 4, 0).toISOString(),
-          end_time: new Date(2026, 4, 1, 6, 0).toISOString(),
-          time_changed: false
-        }
-      ];
+      if (schedulesData.success && schedulesData.schedules) {
+        const mapped = schedulesData.schedules.map(mapScheduleToAvailability);
+        setAvailabilities(mapped);
+      } else {
+        setAvailabilities([]);
+      }
 
-      setAvailabilities(mockAvailabilities);
-      setBookings(mockBookings);
+      // Fetch user's bookings (schedules user is enrolled in)
+      const bookingsRes = await fetch(`${API_BASE}/schedule/my-bookings`, {
+        headers: getAuthHeaders()
+      });
+      const bookingsData = await bookingsRes.json();
+
+      if (bookingsData.success && bookingsData.schedules) {
+        const mappedBookings = bookingsData.schedules.map(mapScheduleToBooking);
+        setBookings(mappedBookings);
+      } else {
+        setBookings([]);
+      }
     } catch (err) {
       console.error('Failed to load schedule data:', err);
     } finally {
@@ -169,10 +128,10 @@ const SchedulePage = () => {
     fetchData();
   }, []);
 
-  // Filter Logic
+  // Filter Logic — trainer filter now uses trainer_name
   const filteredAvailabilities = availabilities.filter((slot) => {
     if (categoryFilter !== 'All' && slot.session_category !== categoryFilter) return false;
-    if (trainerFilter !== 'All' && slot.trainer_id !== trainerFilter) return false;
+    if (trainerFilter !== 'All' && slot.trainer_name !== trainerFilter) return false;
     if (dateRange && dateRange[0] && dateRange[1]) {
       const slotDate = parseISO(slot.start_time);
       const start = dateRange[0];
@@ -184,11 +143,11 @@ const SchedulePage = () => {
     return true;
   }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
-  // Unique Categories and Trainers for filters
+  // Unique Categories and Trainers for filters — deduplicate by trainer name
   const uniqueCategories = ['All', ...Array.from(new Set(availabilities.map((a) => a.session_category || 'General')))];
   const uniqueTrainers = [
     { id: 'All', name: 'All Trainers' },
-    ...Array.from(new Map(availabilities.map((a) => [a.trainer_id, { id: a.trainer_id, name: a.trainer_name }])).values())
+    ...Array.from(new Map(availabilities.map((a) => [a.trainer_name, { id: a.trainer_name, name: a.trainer_name }])).values())
   ];
 
   const handleTrainerClick = (trainer) => {
@@ -202,7 +161,7 @@ const SchedulePage = () => {
     setBookingModalVisible(true);
   };
 
-  const confirmBooking = () => {
+  const confirmBooking = async () => {
     console.log('=== CONFIRM BOOKING STARTED ===');
     console.log('selectedSlot:', selectedSlot);
     
@@ -214,36 +173,28 @@ const SchedulePage = () => {
     setBookingLoading(true);
     
     try {
-      const newBooking = {
-        _id: `booking-${Date.now()}`,
-        availability_id: selectedSlot._id,
-        trainer_id: selectedSlot.trainer_id,
-        trainer_name: selectedSlot.trainer_name,
-        start_time: selectedSlot.start_time,
-        end_time: selectedSlot.end_time,
-        time_changed: false
-      };
-
-      console.log('✓ Created new booking object:', newBooking);
-      
-      // Add booking FIRST
-      setBookings((prev) => {
-        const updated = [...prev, newBooking];
-        console.log('✓ Bookings array updated. New length:', updated.length);
-        console.log('✓ All bookings:', updated);
-        return updated;
+      // Call the enroll API
+      const res = await fetch(`${API_BASE}/schedule/${selectedSlot._id}/enroll`, {
+        method: 'PUT',
+        headers: getAuthHeaders()
       });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to book session');
+      }
+
+      console.log('✅ BOOKING CONFIRMED SUCCESSFULLY');
       
       // Close modals
-      console.log('✓ Closing modals...');
       setBookingModalVisible(false);
       setProfileModalVisible(false);
       setSelectedSlot(null);
       
-      // Show success message
+      // Refresh data from the database
+      await fetchData();
+
       alert('✅ Booking confirmed! Check the "My Bookings" section on the right.');
-      
-      console.log('✅ BOOKING CONFIRMED SUCCESSFULLY');
     } catch (err) {
       console.error('❌ Error in confirmBooking:', err);
       alert('❌ Error creating booking: ' + err.message);
@@ -253,17 +204,43 @@ const SchedulePage = () => {
   };
 
   const handleCancelBooking = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) {
+      return;
+    }
+
     try {
-      // TODO: Replace with actual API call
-      console.log('Booking cancelled:', id);
-      fetchData();
+      const res = await fetch(`${API_BASE}/schedule/${id}/unenroll`, {
+        method: 'PUT',
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to cancel booking');
+      }
+
+      // Remove the booking from local state immediately
+      setBookings((prev) => prev.filter((b) => b._id !== id));
+
+      // Also refresh availabilities so spots_left updates
+      const schedulesRes = await fetch(`${API_BASE}/schedule`, {
+        headers: getAuthHeaders()
+      });
+      const schedulesData = await schedulesRes.json();
+      if (schedulesData.success && schedulesData.schedules) {
+        setAvailabilities(schedulesData.schedules.map(mapScheduleToAvailability));
+      }
+
+      alert('Booking cancelled successfully.');
     } catch (err) {
       console.error('Error cancelling booking:', err);
+      alert('Error cancelling booking: ' + err.message);
     }
   };
 
-  const handleOpenChat = (trainer) => {
+  const handleOpenChat = (trainer, scheduleId) => {
     setChatUser(trainer);
+    setChatScheduleId(scheduleId);
     setUnreadCounts((prev) => ({ ...prev, [trainer._id]: 0 }));
   };
 
@@ -386,7 +363,7 @@ const SchedulePage = () => {
                                 _id: booking.trainer_id || 'trainer-' + booking._id,
                                 name: booking.trainer_name,
                                 role: 'trainer'
-                              })
+                              }, booking.availability_id || booking._id)
                             }
                           >
                             💬
@@ -452,7 +429,17 @@ const SchedulePage = () => {
         />
       )}
 
-      {chatUser && <ChatBox currentUser={{ id: 'user-id', name: 'You', role: 'user' }} otherUser={chatUser} onClose={() => setChatUser(null)} />}
+      {chatUser && (
+        <ChatBox 
+          currentUser={JSON.parse(localStorage.getItem('user') || '{}')} 
+          otherUser={chatUser} 
+          scheduleId={chatScheduleId}
+          onClose={() => {
+            setChatUser(null);
+            setChatScheduleId(null);
+          }} 
+        />
+      )}
     </div>
   );
 };

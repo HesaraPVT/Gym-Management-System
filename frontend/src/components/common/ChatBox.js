@@ -1,24 +1,66 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-const ChatBox = ({ currentUser, otherUser, onClose }) => {
-  const [messages, setMessages] = useState([
-    {
-      _id: '1',
-      sender_id: 'trainer-1',
-      receiver_id: 'user-1',
-      text: 'hello',
-      timestamp: new Date(Date.now() - 5000).toISOString()
-    },
-    {
-      _id: '2',
-      sender_id: 'user-1',
-      receiver_id: 'trainer-1',
-      text: 'how can i help u',
-      timestamp: new Date(Date.now() - 2000).toISOString()
-    }
-  ]);
+const API_BASE = 'http://localhost:5000/api';
+
+const ChatBox = ({ currentUser, otherUser, scheduleId, onClose }) => {
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+  };
+
+  const markMessageAsRead = useCallback(async (messageId) => {
+    try {
+      await fetch(`${API_BASE}/messages/${messageId}/read`, {
+        method: 'PUT',
+        headers: getAuthHeaders()
+      });
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+    }
+  }, []);
+
+  // Fetch messages for the schedule
+  const fetchMessages = useCallback(async () => {
+    try {
+      if (!scheduleId) return;
+
+      const res = await fetch(`${API_BASE}/messages/${scheduleId}`, {
+        headers: getAuthHeaders()
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.messages) {
+        setMessages(data.messages);
+        
+        // Mark unread messages as read
+        data.messages.forEach((msg) => {
+          if (msg.receiver_id && msg.receiver_id._id === currentUser.id && !msg.isRead) {
+            markMessageAsRead(msg._id);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  }, [scheduleId, currentUser.id, markMessageAsRead]);
+
+  useEffect(() => {
+    fetchMessages();
+    
+    // Poll for new messages every 3 seconds
+    const interval = setInterval(fetchMessages, 3000);
+
+    return () => clearInterval(interval);
+  }, [fetchMessages]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -30,22 +72,36 @@ const ChatBox = ({ currentUser, otherUser, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  const handleSend = async () => {
+    if (!inputText.trim() || !scheduleId) return;
 
-    const newMessage = {
-      _id: Date.now(),
-      sender_id: currentUser.id,
-      receiver_id: otherUser._id,
-      text: inputText.trim(),
-      timestamp: new Date().toISOString()
-    };
+    setSending(true);
 
-    setMessages((prev) => [...prev, newMessage]);
-    setInputText('');
+    try {
+      const res = await fetch(`${API_BASE}/messages/send`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          receiver_id: otherUser._id,
+          schedule_id: scheduleId,
+          text: inputText.trim()
+        })
+      });
 
-    // TODO: Send message through socket or API
-    console.log('Message sent:', newMessage);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to send message');
+      }
+
+      setInputText('');
+      fetchMessages();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message: ' + error.message);
+    } finally {
+      setSending(false);
+    }
   };
 
   if (!otherUser) return null;
@@ -58,7 +114,7 @@ const ChatBox = ({ currentUser, otherUser, onClose }) => {
           <div className="chat-avatar">{otherUser.name?.charAt(0).toUpperCase()}</div>
           <div className="chat-user-details">
             <h3>{otherUser.name}</h3>
-            <p>{otherUser.role}</p>
+            <p>{otherUser.role || 'Trainer'}</p>
           </div>
         </div>
         <button 
@@ -81,10 +137,13 @@ const ChatBox = ({ currentUser, otherUser, onClose }) => {
           </div>
         )}
         {messages.map((msg) => {
-          const isMe = msg.sender_id === currentUser.id;
+          const isMe = msg.sender_id && msg.sender_id._id === currentUser.id;
           return (
             <div key={msg._id} className={`chat-message ${isMe ? 'sent' : 'received'}`}>
               <div className="message-content">{msg.text}</div>
+              <div className="message-time">
+                {new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+              </div>
             </div>
           );
         })}
@@ -100,9 +159,14 @@ const ChatBox = ({ currentUser, otherUser, onClose }) => {
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type a message..."
           className="chat-input"
+          disabled={sending}
         />
-        <button className="chat-send-btn" onClick={handleSend} disabled={!inputText.trim()}>
-          ➤
+        <button 
+          className="chat-send-btn" 
+          onClick={handleSend} 
+          disabled={!inputText.trim() || sending}
+        >
+          {sending ? '⏳' : '➤'}
         </button>
       </div>
     </div>

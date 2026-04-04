@@ -17,6 +17,7 @@ import shopRoutes from './routes/shop.js';
 import inventoryRoutes from './routes/inventory.js';
 import supportRoutes from './routes/support.js';
 import scheduleRoutes from './routes/schedule.js';
+import messageRoutes from './routes/messages.js';
 
 // Load environment variables
 dotenv.config();
@@ -175,6 +176,9 @@ app.use('/api/support', supportRoutes);
 
 // Schedule routes
 app.use('/api/schedule', scheduleRoutes);
+
+// Message routes
+app.use('/api/messages', messageRoutes);
 
 // ==================== ERROR HANDLING ====================
 
