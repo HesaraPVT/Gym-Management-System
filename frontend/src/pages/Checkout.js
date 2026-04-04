@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+/*import React, { useState, useEffect } from 'react';
 import './Checkout.css';
 import ShopHeader from '../components/common/ShopHeader';
 
@@ -123,7 +123,7 @@ function Checkout() {
       <ShopHeader />
       <div className="checkout-container">
         <div className="checkout-content">
-          {/* Order Summary */}
+          {/* Order Summary *//*}
           <div className="order-summary-section">
             <h2>Order Summary</h2>
             
@@ -146,7 +146,7 @@ function Checkout() {
               </div>
             </div>
 
-            {/* Delivery Details */}
+            {/* Delivery Details *//*}
             <div className="delivery-info">
               <h3>Delivery Address</h3>
               <p className="address-info">
@@ -157,7 +157,7 @@ function Checkout() {
             </div>
           </div>
 
-          {/* Payment Methods & Map */}
+          {/* Payment Methods & Map *//*}
           <div className="payment-section">
             <h2>Secure Checkout</h2>
             <div className="total-amount-display">
@@ -222,7 +222,7 @@ function Checkout() {
           </div>
         </div>
 
-        {/* Delivery Map */}
+        {/* Delivery Map *//*}
         <div className="delivery-map-section">
           <h2>Delivery Location</h2>
           <div className="map-container">
@@ -237,6 +237,480 @@ function Checkout() {
               referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
             <p className="map-note">Your order will be delivered to Suduwella, Colombo</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Checkout;*/
+
+
+
+
+
+/*import React, { useState, useEffect } from 'react';
+import './Checkout.css';
+import ShopHeader from '../components/common/ShopHeader';
+
+function Checkout() {
+  const [currentOrder, setCurrentOrder] = useState(null);
+  const [selectedPayment, setSelectedPayment] = useState('COD');
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [orderId, setOrderId] = useState('');
+  
+  const [slip, setSlip] = useState(null);
+  const [cardData, setCardData] = useState({ number: '', expiry: '', cvc: '' });
+
+  useEffect(() => {
+    const order = JSON.parse(localStorage.getItem('currentOrder'));
+    if (order) {
+      setCurrentOrder(order);
+    }
+  }, []);
+
+  const handlePlaceOrder = () => {
+    if (!selectedPayment) {
+      alert('Please select a payment method');
+      return;
+    }
+
+    if (selectedPayment === 'BANK' && !slip) {
+      alert('Please upload your payment slip for Bank Transfer.');
+      return;
+    }
+
+    if (selectedPayment === 'CARD') {
+      if (cardData.number.length < 16 || !cardData.expiry || cardData.cvc.length < 3) {
+        alert('Please fill in all card details correctly.');
+        return;
+      }
+    }
+
+    const finalOrder = {
+      ...currentOrder,
+      paymentMethod: selectedPayment,
+      paymentDetails: selectedPayment === 'CARD' ? { cardLast4: cardData.number.slice(-4) } : null,
+      timestamp: new Date().toLocaleString(),
+    };
+
+    localStorage.setItem('currentOrder', JSON.stringify(finalOrder));
+    setOrderId(finalOrder.id);
+    setShowOrderConfirmation(true);
+
+    setTimeout(() => {
+      localStorage.removeItem('cart');
+      localStorage.removeItem('currentOrder');
+    }, 2000);
+  };
+
+  if (!currentOrder) {
+    return (
+      <div>
+        <ShopHeader />
+        <div className="checkout-container">
+          <div className="loading">
+            <p>Loading order details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showOrderConfirmation) {
+    return (
+      <div>
+        <ShopHeader />
+        <div className="checkout-container">
+          <div className="order-confirmation-page">
+            <div className="confirmation-card">
+              <div className="confirmation-header">
+                <div className="checkmark-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              </div>
+
+              <div className="confirmation-content">
+                <h2>Order Placed Successfully!</h2>
+                <p className="confirmation-message">Your order has been confirmed and is being processed.</p>
+                <div className="order-id-display">
+                  <strong>Order ID:</strong> <span>{orderId}</span>
+                </div>
+                <div className="payment-confirmation">
+                  <strong>Payment Method:</strong>
+                  <span>
+                    {selectedPayment === 'COD' && 'Cash On Delivery (COD)'}
+                    {selectedPayment === 'BANK' && 'Bank Transfer'}
+                    {selectedPayment === 'CARD' && 'Credit / Debit Card'}
+                  </span>
+                </div>
+                <div className="confirmation-buttons">
+                  <button className="continue-btn" onClick={() => window.location.href = '/products'}>Continue Shopping</button>
+                  <button className="track-btn" onClick={() => window.location.href = '/track-order'}>Track Order</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <ShopHeader />
+      <div className="checkout-container">
+        <div className="checkout-content">
+          
+          {/* LEFT COLUMN: Order Summary *//*}
+          <div className="order-summary-section">
+            <h2>Order Summary</h2>
+            <div className="summary-box">
+              <div className="summary-header">
+                <span>ITEMS</span>
+                <span>TOTAL</span>
+              </div>
+              {currentOrder.items.map((item, idx) => (
+                <div key={idx} className="summary-item">
+                  <span>{item.name} x{item.quantity}</span>
+                  <span>LKR {(item.price * item.quantity).toLocaleString()}</span>
+                </div>
+              ))}
+              <div className="summary-total">
+                <strong>Total Amount:</strong>
+                <strong className="total-amount">LKR {currentOrder.total.toLocaleString()}</strong>
+              </div>
+            </div>
+
+            <div className="delivery-info">
+              <h3>DELIVERY ADDRESS</h3>
+              <p className="address-info">
+                <strong>{currentOrder.deliveryDetails.fullName}</strong><br />
+                {currentOrder.deliveryDetails.address}<br />
+                {currentOrder.deliveryDetails.phone}
+              </p>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Payment Selection *//*}
+          <div className="payment-section">
+            <h2>Secure Checkout</h2>
+            <div className="total-amount-display">
+              Total Amount: <span>LKR {currentOrder.total.toLocaleString()}</span>
+            </div>
+
+            <div className="payment-methods">
+              <h3>SELECT PAYMENT METHOD</h3>
+
+              <div className={`payment-option ${selectedPayment === 'COD' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  id="cod"
+                  name="payment"
+                  value="COD"
+                  checked={selectedPayment === 'COD'}
+                  onChange={(e) => setSelectedPayment(e.target.value)}
+                />
+                <label htmlFor="cod">
+                  <strong>Cash On Delivery (COD)</strong>
+                  <span>Pay when your order arrives</span>
+                </label>
+              </div>
+
+              <div className={`payment-option ${selectedPayment === 'BANK' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  id="bank"
+                  name="payment"
+                  value="BANK"
+                  checked={selectedPayment === 'BANK'}
+                  onChange={(e) => setSelectedPayment(e.target.value)}
+                />
+                <label htmlFor="bank">
+                  <strong>Bank Transfer (Upload Slip)</strong>
+                  <span>Transfer funds to our account and upload slip</span>
+                </label>
+              </div>
+
+              {selectedPayment === 'BANK' && (
+                <div className="payment-details-input">
+                  <input type="file" accept="image/*" onChange={(e) => setSlip(e.target.files[0])} />
+                </div>
+              )}
+
+              <div className={`payment-option ${selectedPayment === 'CARD' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  id="card"
+                  name="payment"
+                  value="CARD"
+                  checked={selectedPayment === 'CARD'}
+                  onChange={(e) => setSelectedPayment(e.target.value)}
+                />
+                <label htmlFor="card">
+                  <strong>Credit / Debit Card 💳</strong>
+                  <span>Secure payment with Visa, Mastercard, etc.</span>
+                </label>
+              </div>
+
+              {selectedPayment === 'CARD' && (
+                <div className="payment-details-input card-input-fields">
+                  <input 
+                    type="text" 
+                    placeholder="Card Number (16 digits)" 
+                    maxLength="16"
+                    onChange={(e) => setCardData({...cardData, number: e.target.value})}
+                  />
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <input type="text" placeholder="MM/YY" onChange={(e) => setCardData({...cardData, expiry: e.target.value})} />
+                    <input type="password" placeholder="CVC" maxLength="3" onChange={(e) => setCardData({...cardData, cvc: e.target.value})} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button className="confirm-order-btn" onClick={handlePlaceOrder}>
+              CONFIRM & PLACE ORDER
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Checkout;*/
+
+
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Using navigate for better flow
+import './Checkout.css';
+import ShopHeader from '../components/common/ShopHeader';
+
+function Checkout() {
+  const [currentOrder, setCurrentOrder] = useState(null);
+  const [selectedPayment, setSelectedPayment] = useState('COD');
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
+  const [orderId, setOrderId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  
+  // State for payment details
+  const [slip, setSlip] = useState(null);
+  const [cardData, setCardData] = useState({ number: '', expiry: '', cvc: '' });
+
+  // Load order data from local storage on mount
+  useEffect(() => {
+    const order = JSON.parse(localStorage.getItem('currentOrder'));
+    if (order) {
+      setCurrentOrder(order);
+    }
+  }, []);
+
+  // ✅ NEW: Validation Helper Function
+  const validatePayment = () => {
+    if (selectedPayment === 'BANK') {
+      if (!slip) {
+        alert('Please upload your payment slip for Bank Transfer.');
+        return false;
+      }
+    }
+
+    if (selectedPayment === 'CARD') {
+      const cardNumberRegex = /^\d{16}$/;
+      const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/; // MM/YY format
+      const cvcRegex = /^\d{3}$/;
+
+      if (!cardNumberRegex.test(cardData.number)) {
+        alert('Please enter a valid 16-digit card number.');
+        return false;
+      }
+      if (!expiryRegex.test(cardData.expiry)) {
+        alert('Please enter a valid expiry date (MM/YY).');
+        return false;
+      }
+      if (!cvcRegex.test(cardData.cvc)) {
+        alert('Please enter a valid 3-digit CVC.');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handlePlaceOrder = async () => {
+    // 1. Logic Validation (Updated with strict checks)
+    if (!validatePayment()) return;
+
+    setLoading(true);
+
+    try {
+      // 2. Prepare Multipart Form Data
+      const formData = new FormData();
+      
+      formData.append("items", JSON.stringify(currentOrder.items));
+      formData.append("deliveryDetails", JSON.stringify(currentOrder.deliveryDetails));
+      formData.append("totalAmount", currentOrder.total);
+      formData.append("paymentMethod", selectedPayment);
+      
+      formData.append("customerName", currentOrder.deliveryDetails.fullName);
+      formData.append("phone", currentOrder.deliveryDetails.phone);
+      formData.append("address", currentOrder.deliveryDetails.address);
+
+      // Attach Bank Slip
+      if (selectedPayment === 'BANK' && slip) {
+        formData.append("paymentSlip", slip);
+      }
+      
+      if (selectedPayment === "CARD") {
+        formData.append("cardPaymentStatus", "completed"); 
+      }
+
+      // 3. API Call
+      const response = await axios.post('http://localhost:5000/api/shop/orders', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      // 4. Success Logic
+      if (response.data) {
+        const newId = response.data._id || response.data.order?._id;
+        setOrderId(newId);
+        localStorage.setItem("lastOrderId", newId); 
+        
+        setShowOrderConfirmation(true);
+
+        localStorage.removeItem('cart');
+        localStorage.removeItem('currentOrder');
+        
+        alert(selectedPayment === "CARD" ? "Card Payment Authorized! Order placed." : "Order placed successfully!");
+      }
+    } catch (error) {
+      console.error("Order Submission Error:", error.response?.data || error.message);
+      alert("Error placing order: " + (error.response?.data?.message || "Server connection failed"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // UI rendering
+  if (!currentOrder) {
+    return (
+      <div>
+        <ShopHeader />
+        <div className="checkout-container">
+          <div className="loading">
+            <p>No active checkout session found. Please return to shop.</p>
+            <button onClick={() => navigate('/products')}>Back to Shop</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showOrderConfirmation) {
+    return (
+      <div>
+        <ShopHeader />
+        <div className="checkout-container">
+          <div className="order-confirmation-page">
+            <div className="confirmation-card">
+              <div className="confirmation-header">
+                <div className="checkmark-circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <div className="confirmation-content">
+                <h2>Order Placed Successfully!</h2>
+                <div className="order-id-display">
+                  <strong>Order ID:</strong> <span>{orderId}</span>
+                </div>
+                <div className="confirmation-buttons">
+                  <button className="continue-btn" onClick={() => navigate('/products')}>Continue Shopping</button>
+                  <button className="track-btn" onClick={() => navigate('/track-order')}>Track Order</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <ShopHeader />
+      <div className="checkout-container">
+        <div className="checkout-content">
+          <div className="order-summary-section">
+            <h2>Order Summary</h2>
+            <div className="summary-box">
+              {currentOrder.items.map((item, idx) => (
+                <div key={idx} className="summary-item">
+                  <span>{item.name} x{item.quantity}</span>
+                  <span>LKR {(item.price * item.quantity).toLocaleString()}</span>
+                </div>
+              ))}
+              <div className="summary-total">
+                <strong>Total Amount:</strong>
+                <strong className="total-amount">LKR {currentOrder.total.toLocaleString()}</strong>
+              </div>
+            </div>
+            <div className="delivery-info">
+              <h3>DELIVERY ADDRESS</h3>
+              <p className="address-info">
+                <strong>{currentOrder.deliveryDetails.fullName}</strong><br />
+                {currentOrder.deliveryDetails.address}<br />
+                {currentOrder.deliveryDetails.phone}
+              </p>
+            </div>
+          </div>
+
+          <div className="payment-section">
+            <h2>Secure Checkout</h2>
+            <div className="payment-methods">
+              <h3>SELECT PAYMENT METHOD</h3>
+              
+              <div className={`payment-option ${selectedPayment === 'COD' ? 'active' : ''}`}>
+                <input type="radio" id="cod" name="payment" value="COD" checked={selectedPayment === 'COD'} onChange={(e) => setSelectedPayment(e.target.value)} />
+                <label htmlFor="cod"><strong>Cash On Delivery (COD)</strong></label>
+              </div>
+
+              <div className={`payment-option ${selectedPayment === 'BANK' ? 'active' : ''}`}>
+                <input type="radio" id="bank" name="payment" value="BANK" checked={selectedPayment === 'BANK'} onChange={(e) => setSelectedPayment(e.target.value)} />
+                <label htmlFor="bank"><strong>Bank Transfer (Upload Slip)</strong></label>
+              </div>
+              {selectedPayment === 'BANK' && (
+                <div className="payment-details-input">
+                  <p>Upload Slip:</p>
+                  <input type="file" accept="image/*" onChange={(e) => setSlip(e.target.files[0])} />
+                </div>
+              )}
+
+              <div className={`payment-option ${selectedPayment === 'CARD' ? 'active' : ''}`}>
+                <input type="radio" id="card" name="payment" value="CARD" checked={selectedPayment === 'CARD'} onChange={(e) => setSelectedPayment(e.target.value)} />
+                <label htmlFor="card"><strong>Credit / Debit Card 💳</strong></label>
+              </div>
+              {selectedPayment === 'CARD' && (
+                <div className="payment-details-input card-input-fields">
+                  <input type="text" placeholder="Card Number (16 digits)" maxLength="16" onChange={(e) => setCardData({...cardData, number: e.target.value})} />
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <input type="text" placeholder="MM/YY" maxLength="5" onChange={(e) => setCardData({...cardData, expiry: e.target.value})} />
+                    <input type="password" placeholder="CVC" maxLength="3" onChange={(e) => setCardData({...cardData, cvc: e.target.value})} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button className="confirm-order-btn" onClick={handlePlaceOrder} disabled={loading}>
+              {loading ? "PROCESSING..." : "CONFIRM & PLACE ORDER"}
+            </button>
           </div>
         </div>
       </div>
