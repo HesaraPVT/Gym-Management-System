@@ -45,7 +45,7 @@ const scheduleSchema = new mongoose.Schema({
   },
   recurringFrequency: {
     type: String,
-    enum: ['daily', 'weekly', 'biweekly'],
+    enum: ['daily', 'weekly', 'biweekly', null],
     default: null
   },
   recurringSessionIndex: {

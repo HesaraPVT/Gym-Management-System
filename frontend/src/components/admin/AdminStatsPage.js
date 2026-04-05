@@ -25,11 +25,12 @@ function AdminStatsPage({ measurements }) {
 
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
-          setUsers(usersData);
+          const usersList = usersData.users || usersData;
+          setUsers(Array.isArray(usersList) ? usersList : []);
 
           // Fetch measurements for each user
           const measurementsMap = {};
-          for (const user of usersData) {
+          for (const user of (Array.isArray(usersList) ? usersList : [])) {
             try {
               const measResponse = await fetch(`http://localhost:5000/api/users/${user.id}/measurements`, {
                 headers: {
