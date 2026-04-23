@@ -141,12 +141,13 @@
   gap: 0;
   border: 1px solid #E0E0E0;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .table-header {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1.5fr 1fr 1.2fr 1fr;
+  grid-template-columns: 3.5fr 1.2fr 1.2fr 1.2fr 1.2fr 1.5fr 1fr;
   gap: 12px;
   padding: 16px 20px;
   background-color: #F5F5F5;
@@ -156,17 +157,20 @@
   text-transform: uppercase;
   color: #818284;
   font-family: 'DM Sans', sans-serif;
+  min-width: 100%;
+  overflow-x: auto;
 }
 
 .table-row {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1.5fr 1fr 1.2fr 1fr;
+  grid-template-columns: 3.5fr 1.2fr 1.2fr 1.2fr 1.2fr 1.5fr 1fr;
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid #E0E0E0;
   align-items: center;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  min-width: 100%;
 }
 
 .table-row:hover {
@@ -184,6 +188,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .view-btn {

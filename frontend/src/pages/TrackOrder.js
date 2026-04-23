@@ -216,7 +216,7 @@ function TrackOrder({ orderId }) {
       return;
     }
     try {
-      const res = await axios.get(`http://localhost:5000/api/orders/${id}`);
+      const res = await axios.get(`http://localhost:5001/api/orders/${id}`);
       setOrder(res.data);
       setError("");
     } catch (err) {
@@ -232,7 +232,7 @@ function TrackOrder({ orderId }) {
 
   const handleCancelOrder = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/orders/${order?._id}`);
+      await axios.delete(`http://localhost:5001/api/orders/${order?._id}`);
       localStorage.removeItem("lastOrderId");
       alert("Order Cancelled.");
       navigate("/");
@@ -250,7 +250,7 @@ function TrackOrder({ orderId }) {
     formData.append("status", "pending"); 
 
     try {
-      await axios.patch(`http://localhost:5000/api/orders/${order?._id}`, formData);
+      await axios.patch(`http://localhost:5001/api/orders/${order?._id}`, formData);
       alert("Slip updated!");
       setNewSlip(null);
       fetchOrder();
@@ -383,7 +383,7 @@ function TrackOrder() {
       return;
     }
     try {
-      const res = await axios.get(`http://localhost:5000/api/shop/order/${orderId}?t=${Date.now()}`);
+      const res = await axios.get(`http://localhost:5001/api/shop/order/${orderId}?t=${Date.now()}`);
       setOrder(res.data);
       setError("");
     } catch (err) {
@@ -394,7 +394,7 @@ function TrackOrder() {
   const handleDeleteOrder = async () => {
     if (window.confirm("Are you sure you want to cancel this order?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/shop/order/${order._id}`);
+        await axios.delete(`http://localhost:5001/api/shop/order/${order._id}`);
         alert("Order cancelled.");
         localStorage.removeItem("lastOrderId");
         navigate("/products");

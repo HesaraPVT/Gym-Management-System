@@ -41,7 +41,7 @@ function UserSignin() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/users/signin', {
+      const response = await fetch('http://localhost:5001/api/auth/user/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
@@ -116,6 +116,16 @@ function UserSignin() {
               onClick={() => navigate('/signup/user')}
             >
               Create now
+            </button>
+          </p>
+          <p>
+            Forgot your password?{' '}
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => navigate('/forgot-password?role=user')}
+            >
+              Reset it
             </button>
           </p>
         </div>

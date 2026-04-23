@@ -40,7 +40,7 @@ function TrainerSignin() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/trainers/signin', {
+      const response = await fetch('http://localhost:5001/api/auth/trainer/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -110,6 +110,10 @@ function TrainerSignin() {
 
         <p className="auth-footer">
           Don't have an account? <a href="/signup/trainer">Sign up here</a>
+        </p>
+
+        <p className="auth-footer">
+          Forgot your password? <a href="/forgot-password?role=trainer">Reset it</a>
         </p>
 
         <div className="role-links">

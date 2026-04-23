@@ -25,7 +25,7 @@ function ProgressPage({ measurements }) {
   const chartData = sortedMeasurements.map((m) => ({
     date: m.date,
     weight: parseFloat(m.weight),
-    bodyFat: parseFloat(m.bodyFat),
+    bodyFat: parseFloat(m.bodyFatPercentage),
     muscleMass: parseFloat(m.muscleMass),
     height: parseFloat(m.height),
   }));

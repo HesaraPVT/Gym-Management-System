@@ -17,7 +17,7 @@ function AdminStatsPage({ measurements }) {
         const token = localStorage.getItem('token');
         
         // Fetch all users
-        const usersResponse = await fetch('http://localhost:5000/api/users', {
+        const usersResponse = await fetch('http://localhost:5001/api/users', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -25,25 +25,25 @@ function AdminStatsPage({ measurements }) {
 
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
-          const usersList = usersData.users || usersData;
-          setUsers(Array.isArray(usersList) ? usersList : []);
+          const usersList = Array.isArray(usersData) ? usersData : usersData.users || [];
+          setUsers(usersList);
 
           // Fetch measurements for each user
           const measurementsMap = {};
-          for (const user of (Array.isArray(usersList) ? usersList : [])) {
+          for (const user of usersList) {
             try {
-              const measResponse = await fetch(`http://localhost:5000/api/users/${user.id}/measurements`, {
+              const measResponse = await fetch(`http://localhost:5001/api/progress/measurements/${user._id}`, {
                 headers: {
                   'Authorization': `Bearer ${token}`
                 }
               });
               if (measResponse.ok) {
-                const measurements = await measResponse.json();
-                measurementsMap[user.id] = measurements;
+                const measData = await measResponse.json();
+                measurementsMap[user._id] = measData.measurements || [];
               }
             } catch (error) {
-              console.error(`Error fetching measurements for user ${user.id}:`, error);
-              measurementsMap[user.id] = [];
+              console.error(`Error fetching measurements for user ${user._id}:`, error);
+              measurementsMap[user._id] = [];
             }
           }
           setUserMeasurements(measurementsMap);
@@ -60,11 +60,12 @@ function AdminStatsPage({ measurements }) {
 
   // Create members array from users and their measurements
   const members = useMemo(() => {
+    if (!Array.isArray(users)) return [];
     return users.map((user) => {
-      const userMeasures = userMeasurements[user.id] || [];
+      const userMeasures = userMeasurements[user._id] || [];
       const latest = userMeasures.length > 0 ? userMeasures[userMeasures.length - 1] : null;
       return {
-        id: user.id,
+        id: user._id,
         name: user.name,
         email: user.email,
         measurements: userMeasures,
@@ -79,7 +80,7 @@ function AdminStatsPage({ measurements }) {
 
     if (searchQuery) {
       filtered = filtered.filter((m) =>
-        m.name.toLowerCase().includes(searchQuery.toLowerCase())
+        m.name && m.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -94,7 +95,7 @@ function AdminStatsPage({ measurements }) {
     if (filterType === 'bodyFat' && filterValue) {
       const [min, max] = filterValue.split('-').map(Number);
       filtered = filtered.filter((m) => {
-        const bf = parseFloat(m.latest.bodyFat);
+        const bf = parseFloat(m.latest.bodyFatPercentage);
         return bf >= min && bf <= max;
       });
     }
@@ -216,7 +217,7 @@ function AdminStatsPage({ measurements }) {
                 >
                   <div className="table-cell">{member.name}</div>
                   <div className="table-cell">{member.latest?.weight || '--'} kg</div>
-                  <div className="table-cell">{member.latest?.bodyFat || '--'}%</div>
+                  <div className="table-cell">{member.latest?.bodyFatPercentage || '--'}%</div>
                   <div className="table-cell">{member.latest?.muscleMass || '--'} kg</div>
                   <div className="table-cell">{member.latest?.height || '--'} cm</div>
                   <div className="table-cell">
@@ -248,20 +249,26 @@ function AdminStatsPage({ measurements }) {
 
             <div className="measurement-history-list">
               {[...selectedMemberData].reverse().map((m) => (
-                <div className="measurement-card" key={m.id}>
+                <div className="measurement-card" key={m._id}>
                   <div className="measurement-card-data">
                     <p>
                       <span>Weight:</span> {m.weight} kg
                     </p>
                     <p>
-                      <span>Muscle Mass:</span> {m.muscleMass} kg
-                    </p>
-                    <p>
-                      <span>Body Fat:</span> {m.bodyFat} %
-                    </p>
-                    <p>
                       <span>Height:</span> {m.height} cm
                     </p>
+                    <p>
+                      <span>Waist:</span> {m.waist} cm
+                    </p>
+                    {m.chest && <p><span>Chest:</span> {m.chest} cm</p>}
+                    {m.arms && <p><span>Arms:</span> {m.arms} cm</p>}
+                    {m.legs && <p><span>Legs:</span> {m.legs} cm</p>}
+                    {m.shoulders && <p><span>Shoulders:</span> {m.shoulders} cm</p>}
+                    <p>
+                      <span>Body Fat:</span> {m.bodyFatPercentage} % <span style={{fontSize: '0.8em', color: '#999'}}>(calculated)</span>
+                    </p>
+                    {m.muscleMass && <p><span>Muscle Mass:</span> {m.muscleMass} kg</p>}
+                    {m.bmi && <p><span>BMI:</span> {m.bmi}</p>}
                     <p className="measurement-card-date">
                       {formatDate(m.date)}
                     </p>

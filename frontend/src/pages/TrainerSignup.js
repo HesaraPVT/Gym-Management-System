@@ -50,7 +50,7 @@ function TrainerSignup() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/trainers/signup', {
+      const response = await fetch('http://localhost:5001/api/auth/trainer/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,12 +109,21 @@ function TrainerSignup() {
 
           <div className="form-group">
             <label>Specialization</label>
-            <input
-              type="text"
+            <select
               value={specialization}
               onChange={(e) => setSpecialization(e.target.value)}
-              placeholder="e.g., Strength Training, Yoga, Cardio"
-            />
+              required
+            >
+              <option value="">Select a specialization</option>
+              <option value="Cardio">Cardio</option>
+              <option value="Strength">Strength</option>
+              <option value="Yoga">Yoga</option>
+              <option value="CrossFit">CrossFit</option>
+              <option value="Pilates">Pilates</option>
+              <option value="Zumba">Zumba</option>
+              <option value="Boxing">Boxing</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
 
           <div className="form-group">

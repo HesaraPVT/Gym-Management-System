@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './StatsPage.css';
 import { useToast } from '../Toast';
 import instructionImg from '../../images/instruction.jpeg';
+import { calculateBodyFat, calculateBMI, getBodyFatCategory } from '../../utils/bodyFatCalculator';
 
 function StatsPage({ measurements, setMeasurements }) {
   const toast = useToast();
@@ -10,9 +11,12 @@ function StatsPage({ measurements, setMeasurements }) {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     weight: '',
-    bodyFat: '',
-    muscleMass: '',
     height: '',
+    chest: '',
+    waist: '',
+    arms: '',
+    legs: '',
+    shoulders: '',
     date: new Date().toISOString().split('T')[0],
   });
 
@@ -26,7 +30,7 @@ function StatsPage({ measurements, setMeasurements }) {
           return;
         }
 
-        const response = await fetch(`http://localhost:5000/api/users/${userData.id}/measurements`, {
+        const response = await fetch(`http://localhost:5001/api/progress/measurements/${userData.id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -34,7 +38,7 @@ function StatsPage({ measurements, setMeasurements }) {
 
         if (response.ok) {
           const data = await response.json();
-          setMeasurements(data);
+          setMeasurements(data.measurements || []);
         }
       } catch (error) {
         console.error('Error loading measurements:', error);
@@ -62,11 +66,41 @@ function StatsPage({ measurements, setMeasurements }) {
         return;
       }
 
+      // Validate required fields
+      if (!formData.weight || !formData.height || !formData.waist) {
+        toast.error('Weight, height, and waist measurements are required for body fat calculation');
+        return;
+      }
+
+      // Calculate body fat percentage
+      const bodyFatPercentage = calculateBodyFat({
+        weight: parseFloat(formData.weight),
+        height: parseFloat(formData.height),
+        chest: parseFloat(formData.chest) || 0,
+        waist: parseFloat(formData.waist),
+        arms: parseFloat(formData.arms) || 0,
+        legs: parseFloat(formData.legs) || 0,
+        shoulders: parseFloat(formData.shoulders) || 0,
+      }, userData.gender || 'male');
+
+      // Calculate BMI
+      const bmi = calculateBMI(parseFloat(formData.weight), parseFloat(formData.height));
+
+      // Calculate muscle mass (estimated from lean body mass)
+      const leanMass = parseFloat(formData.weight) * (1 - bodyFatPercentage / 100);
+      const calculatedMuscleMass = Math.round(leanMass * 0.95 * 10) / 10; // Estimated muscle mass from lean mass
+
       const measurementPayload = {
         weight: parseFloat(formData.weight),
-        bodyFat: parseFloat(formData.bodyFat),
-        muscleMass: parseFloat(formData.muscleMass),
         height: parseFloat(formData.height),
+        chest: parseFloat(formData.chest) || null,
+        waist: parseFloat(formData.waist),
+        arms: parseFloat(formData.arms) || null,
+        legs: parseFloat(formData.legs) || null,
+        shoulders: parseFloat(formData.shoulders) || null,
+        bodyFatPercentage: bodyFatPercentage,
+        muscleMass: calculatedMuscleMass,
+        bmi: bmi,
         date: formData.date
       };
 
@@ -74,7 +108,7 @@ function StatsPage({ measurements, setMeasurements }) {
       
       if (editingId !== null) {
         // Update existing measurement
-        response = await fetch(`http://localhost:5000/api/users/${userData.id}/measurements/${editingId}`, {
+        response = await fetch(`http://localhost:5001/api/progress/measurements/${editingId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -84,7 +118,8 @@ function StatsPage({ measurements, setMeasurements }) {
         });
 
         if (response.ok) {
-          const updated = await response.json();
+          const data = await response.json();
+          const updated = { ...data.measurement, id: data.measurement._id };
           setMeasurements(
             measurements.map((m) => m.id === editingId ? updated : m)
           );
@@ -92,12 +127,24 @@ function StatsPage({ measurements, setMeasurements }) {
           setEditingId(null);
         } else {
           const error = await response.json();
-          toast.error('Error updating measurement: ' + error.detail);
+          toast.error('Error updating measurement: ' + (error.message || error.detail));
           return;
         }
       } else {
+        // Check if a measurement already exists for this date
+        const measurementExists = measurements.some(m => {
+          const existingDate = typeof m.date === 'string' ? m.date.split('T')[0] : new Date(m.date).toISOString().split('T')[0];
+          return existingDate === formData.date;
+        });
+        if (measurementExists) {
+          toast.error('A measurement already exists for this date. Please edit the existing one or choose a different date.');
+          return;
+        }
+
         // Create new measurement
-        response = await fetch(`http://localhost:5000/api/users/${userData.id}/measurements`, {
+        console.log('📤 Sending measurement to backend:', measurementPayload);
+        
+        response = await fetch(`http://localhost:5001/api/progress/measurements`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -106,22 +153,29 @@ function StatsPage({ measurements, setMeasurements }) {
           body: JSON.stringify(measurementPayload)
         });
 
+        console.log('📥 Backend response status:', response.status);
+        const data = await response.json();
+        console.log('📥 Backend response:', data);
+
         if (response.ok) {
-          const newMeasurement = await response.json();
+          const newMeasurement = { ...data.measurement, id: data.measurement._id };
           setMeasurements([...measurements, newMeasurement]);
           toast.success('Measurement added successfully');
         } else {
           const error = await response.json();
-          toast.error('Error saving measurement: ' + error.detail);
+          toast.error('Error saving measurement: ' + (error.message || error.detail));
           return;
         }
       }
 
       setFormData({
         weight: '',
-        bodyFat: '',
-        muscleMass: '',
         height: '',
+        chest: '',
+        waist: '',
+        arms: '',
+        legs: '',
+        shoulders: '',
         date: new Date().toISOString().split('T')[0],
       });
       setShowForm(false);
@@ -134,12 +188,15 @@ function StatsPage({ measurements, setMeasurements }) {
   const handleEdit = (measurement) => {
     setFormData({
       weight: measurement.weight,
-      bodyFat: measurement.bodyFat,
-      muscleMass: measurement.muscleMass,
       height: measurement.height,
+      chest: measurement.chest || '',
+      waist: measurement.waist || '',
+      arms: measurement.arms || '',
+      legs: measurement.legs || '',
+      shoulders: measurement.shoulders || '',
       date: measurement.date,
     });
-    setEditingId(measurement.id);
+    setEditingId(measurement._id);
     setShowForm(true);
   };
 
@@ -153,7 +210,7 @@ function StatsPage({ measurements, setMeasurements }) {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/users/${userData.id}/measurements/${id}`, {
+      const response = await fetch(`http://localhost:5001/api/progress/measurements/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -161,7 +218,7 @@ function StatsPage({ measurements, setMeasurements }) {
       });
 
       if (response.ok) {
-        setMeasurements(measurements.filter((m) => m.id !== id));
+        setMeasurements(measurements.filter((m) => m._id !== id));
         toast.success('Measurement deleted successfully');
       } else {
         const error = await response.json();
@@ -178,9 +235,12 @@ function StatsPage({ measurements, setMeasurements }) {
     setEditingId(null);
     setFormData({
       weight: '',
-      bodyFat: '',
-      muscleMass: '',
       height: '',
+      chest: '',
+      waist: '',
+      arms: '',
+      legs: '',
+      shoulders: '',
       date: new Date().toISOString().split('T')[0],
     });
   };
@@ -230,7 +290,7 @@ function StatsPage({ measurements, setMeasurements }) {
             <div className="stat-card">
               <div className="stat-card-label">Body Fat</div>
               <div className="stat-card-value">
-                {latestMeasurement ? latestMeasurement.bodyFat : '--'}
+                {latestMeasurement ? latestMeasurement.bodyFatPercentage : '--'}
               </div>
               <div className="stat-card-unit">%</div>
             </div>
@@ -242,11 +302,11 @@ function StatsPage({ measurements, setMeasurements }) {
               <div className="stat-card-unit">kg</div>
             </div>
             <div className="stat-card">
-              <div className="stat-card-label">Height</div>
+              <div className="stat-card-label">BMI</div>
               <div className="stat-card-value">
-                {latestMeasurement ? latestMeasurement.height : '--'}
+                {latestMeasurement ? latestMeasurement.bmi : '--'}
               </div>
-              <div className="stat-card-unit">cm</div>
+              <div className="stat-card-unit"></div>
             </div>
           </div>
 
@@ -272,20 +332,26 @@ function StatsPage({ measurements, setMeasurements }) {
               <h2 className="measurement-history-title">Measurement History</h2>
               <div className="measurement-history-list">
                 {[...measurements].reverse().map((m) => (
-                  <div className="measurement-card" key={m.id}>
+                  <div className="measurement-card" key={m._id}>
                     <div className="measurement-card-data">
                       <p>
                         <span>Weight:</span> {m.weight} kg
                       </p>
                       <p>
-                        <span>Muscle Mass:</span> {m.muscleMass} kg
-                      </p>
-                      <p>
-                        <span>Body Fat:</span> {m.bodyFat} %
-                      </p>
-                      <p>
                         <span>Height:</span> {m.height} cm
                       </p>
+                      <p>
+                        <span>Waist:</span> {m.waist} cm
+                      </p>
+                      {m.chest && <p><span>Chest:</span> {m.chest} cm</p>}
+                      {m.arms && <p><span>Arms:</span> {m.arms} cm</p>}
+                      {m.legs && <p><span>Legs:</span> {m.legs} cm</p>}
+                      {m.shoulders && <p><span>Shoulders:</span> {m.shoulders} cm</p>}
+                      <p>
+                        <span>Body Fat:</span> {m.bodyFatPercentage} % <span style={{fontSize: '0.8em', color: '#999'}}>(calculated)</span>
+                      </p>
+                      <p><span>Muscle Mass:</span> {m.muscleMass} kg <span style={{fontSize: '0.8em', color: '#999'}}>(calculated)</span></p>
+                      {m.bmi && <p><span>BMI:</span> {m.bmi}</p>}
                       <p className="measurement-card-date">{formatDate(m.date)}</p>
                     </div>
                     <div className="measurement-card-actions">
@@ -294,7 +360,7 @@ function StatsPage({ measurements, setMeasurements }) {
                       </button>
                       <button
                         className="delete-btn"
-                        onClick={() => handleDelete(m.id)}
+                        onClick={() => handleDelete(m._id)}
                       >
                         Delete
                       </button>
@@ -344,35 +410,6 @@ function StatsPage({ measurements, setMeasurements }) {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Body Fat (%)</label>
-                <input
-                  type="number"
-                  name="bodyFat"
-                  className="form-input"
-                  placeholder="e.g. 18"
-                  value={formData.bodyFat}
-                  onChange={handleInputChange}
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Muscle Mass (kg)</label>
-                <input
-                  type="number"
-                  name="muscleMass"
-                  className="form-input"
-                  placeholder="e.g. 65"
-                  value={formData.muscleMass}
-                  onChange={handleInputChange}
-                  step="0.1"
-                  min="0.1"
-                  required
-                />
-              </div>
-              <div className="form-group">
                 <label className="form-label">Height (cm)</label>
                 <input
                   type="number"
@@ -386,6 +423,75 @@ function StatsPage({ measurements, setMeasurements }) {
                   required
                 />
               </div>
+              <div className="form-group">
+                <label className="form-label">Waist (cm)</label>
+                <input
+                  type="number"
+                  name="waist"
+                  className="form-input"
+                  placeholder="e.g. 80"
+                  value={formData.waist}
+                  onChange={handleInputChange}
+                  step="0.1"
+                  min="0.1"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Chest (cm)</label>
+                <input
+                  type="number"
+                  name="chest"
+                  className="form-input"
+                  placeholder="e.g. 100"
+                  value={formData.chest}
+                  onChange={handleInputChange}
+                  step="0.1"
+                  min="0.1"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Arms (cm)</label>
+                <input
+                  type="number"
+                  name="arms"
+                  className="form-input"
+                  placeholder="e.g. 32"
+                  value={formData.arms}
+                  onChange={handleInputChange}
+                  step="0.1"
+                  min="0.1"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Legs (cm)</label>
+                <input
+                  type="number"
+                  name="legs"
+                  className="form-input"
+                  placeholder="e.g. 58"
+                  value={formData.legs}
+                  onChange={handleInputChange}
+                  step="0.1"
+                  min="0.1"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Shoulders (cm)</label>
+                <input
+                  type="number"
+                  name="shoulders"
+                  className="form-input"
+                  placeholder="e.g. 120"
+                  value={formData.shoulders}
+                  onChange={handleInputChange}
+                  step="0.1"
+                  min="0.1"
+                />
+              </div>
+              <p className="form-info" style={{fontSize: '0.85em', color: '#666', margin: '10px 0', fontStyle: 'italic'}}>
+                Body fat percentage and muscle mass are automatically calculated from your measurements
+              </p>
               <button type="submit" className="form-submit-btn">
                 {editingId !== null ? 'Update Measurement' : 'Save Measurement'}
               </button>

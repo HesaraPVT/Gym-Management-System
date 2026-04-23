@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import './TrainerScheduleManagement.css';
 import ChatBox from '../common/ChatBox';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5001/api';
 
 function TrainerScheduleManagement() {
   const [formData, setFormData] = useState({

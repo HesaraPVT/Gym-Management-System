@@ -25,7 +25,7 @@ function AdminProgressPage({ measurements }) {
         const token = localStorage.getItem('token');
         
         // Fetch all users
-        const usersResponse = await fetch('http://localhost:5000/api/users', {
+        const usersResponse = await fetch('http://localhost:5001/api/users', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -33,24 +33,25 @@ function AdminProgressPage({ measurements }) {
 
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
-          setUsers(usersData);
+          const usersList = Array.isArray(usersData) ? usersData : usersData.users || [];
+          setUsers(usersList);
 
           // Fetch measurements for each user
           const measMap = {};
-          for (const user of usersData) {
+          for (const user of usersList) {
             try {
-              const measResponse = await fetch(`http://localhost:5000/api/users/${user.id}/measurements`, {
+              const measResponse = await fetch(`http://localhost:5001/api/progress/measurements/${user._id}`, {
                 headers: {
                   'Authorization': `Bearer ${token}`
                 }
               });
               if (measResponse.ok) {
                 const userMeasData = await measResponse.json();
-                measMap[user.id] = userMeasData;
+                measMap[user._id] = userMeasData.measurements || [];
               }
             } catch (error) {
-              console.error(`Error fetching measurements for user ${user.id}:`, error);
-              measMap[user.id] = [];
+              console.error(`Error fetching measurements for user ${user._id}:`, error);
+              measMap[user._id] = [];
             }
           }
           setUserMeasurements(measMap);
@@ -68,14 +69,16 @@ function AdminProgressPage({ measurements }) {
   // Create members array from users and their measurements
   const members = useMemo(() => {
     const memberMap = {};
-    users.forEach((user) => {
-      memberMap[user.id] = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        measurements: userMeasurements[user.id] || []
-      };
-    });
+    if (Array.isArray(users)) {
+      users.forEach((user) => {
+        memberMap[user._id] = {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          measurements: userMeasurements[user._id] || []
+        };
+      });
+    }
     return memberMap;
   }, [users, userMeasurements]);
 
@@ -101,7 +104,7 @@ function AdminProgressPage({ measurements }) {
       const previous = sorted[sorted.length - 2];
 
       const weightChange = parseFloat(latest.weight) - parseFloat(previous.weight);
-      const bodyFatChange = parseFloat(latest.bodyFat) - parseFloat(previous.bodyFat);
+      const bodyFatChange = parseFloat(latest.bodyFatPercentage) - parseFloat(previous.bodyFatPercentage);
 
       // Alert for rapid weight loss/gain (more than 2kg change)
       if (Math.abs(weightChange) > 2) {
@@ -143,7 +146,7 @@ function AdminProgressPage({ measurements }) {
       const weightChange = parseFloat(first.weight) - parseFloat(latest.weight);
       const muscleMassChange =
         parseFloat(latest.muscleMass) - parseFloat(first.muscleMass);
-      const bodyFatChange = parseFloat(first.bodyFat) - parseFloat(latest.bodyFat);
+      const bodyFatChange = parseFloat(first.bodyFatPercentage) - parseFloat(latest.bodyFatPercentage);
 
       insights.push({
         id: member.id,
@@ -172,7 +175,7 @@ function AdminProgressPage({ measurements }) {
   const chartData = sortedMeasurements.map((m) => ({
     date: m.date,
     weight: parseFloat(m.weight),
-    bodyFat: parseFloat(m.bodyFat),
+    bodyFat: parseFloat(m.bodyFatPercentage),
     muscleMass: parseFloat(m.muscleMass),
     height: parseFloat(m.height),
   }));

@@ -26,7 +26,7 @@ function WorkoutPage({ workouts, setWorkouts }) {
           return;
         }
 
-        const response = await fetch(`http://localhost:5000/api/users/${userData.id}/workouts`, {
+        const response = await fetch(`http://localhost:5001/api/progress/workouts/${userData.id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -34,7 +34,7 @@ function WorkoutPage({ workouts, setWorkouts }) {
 
         if (response.ok) {
           const data = await response.json();
-          setWorkouts(data);
+          setWorkouts(data.workouts || []);
         }
       } catch (error) {
         console.error('Error loading workouts:', error);
@@ -61,7 +61,7 @@ function WorkoutPage({ workouts, setWorkouts }) {
       }
 
       const workoutPayload = {
-        exercise: formData.exercise,
+        exerciseName: formData.exercise,
         sets: parseInt(formData.sets),
         reps: parseInt(formData.reps),
         weight: parseFloat(formData.weight),
@@ -72,7 +72,7 @@ function WorkoutPage({ workouts, setWorkouts }) {
 
       if (editingId !== null) {
         // Update existing workout
-        response = await fetch(`http://localhost:5000/api/users/${userData.id}/workouts/${editingId}`, {
+        response = await fetch(`http://localhost:5001/api/progress/workouts/${editingId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -82,7 +82,8 @@ function WorkoutPage({ workouts, setWorkouts }) {
         });
 
         if (response.ok) {
-          const updated = await response.json();
+          const data = await response.json();
+          const updated = { ...data.workout, id: data.workout._id };
           setWorkouts(
             workouts.map((w) => w.id === editingId ? updated : w)
           );
@@ -90,12 +91,12 @@ function WorkoutPage({ workouts, setWorkouts }) {
           setEditingId(null);
         } else {
           const error = await response.json();
-          toast.error('Error updating workout: ' + error.detail);
+          toast.error('Error updating workout: ' + (error.message || error.detail));
           return;
         }
       } else {
         // Create new workout
-        response = await fetch(`http://localhost:5000/api/users/${userData.id}/workouts`, {
+        response = await fetch(`http://localhost:5001/api/progress/workouts`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -105,12 +106,13 @@ function WorkoutPage({ workouts, setWorkouts }) {
         });
 
         if (response.ok) {
-          const newWorkout = await response.json();
+          const data = await response.json();
+          const newWorkout = { ...data.workout, id: data.workout._id };
           setWorkouts([...workouts, newWorkout]);
           toast.success('Workout added successfully');
         } else {
           const error = await response.json();
-          toast.error('Error saving workout: ' + error.detail);
+          toast.error('Error saving workout: ' + (error.message || error.detail));
           return;
         }
       }
@@ -131,13 +133,13 @@ function WorkoutPage({ workouts, setWorkouts }) {
 
   const handleEdit = (workout) => {
     setFormData({
-      exercise: workout.exercise,
+      exercise: workout.exerciseName,
       sets: workout.sets.toString(),
       reps: workout.reps.toString(),
       weight: workout.weight.toString(),
       date: workout.date,
     });
-    setEditingId(workout.id);
+    setEditingId(workout._id);
     setShowForm(true);
   };
 
@@ -151,7 +153,7 @@ function WorkoutPage({ workouts, setWorkouts }) {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/users/${userData.id}/workouts/${id}`, {
+      const response = await fetch(`http://localhost:5001/api/progress/workouts/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -159,11 +161,11 @@ function WorkoutPage({ workouts, setWorkouts }) {
       });
 
       if (response.ok) {
-        setWorkouts(workouts.filter((w) => w.id !== id));
+        setWorkouts(workouts.filter((w) => w._id !== id));
         toast.success('Workout deleted successfully');
       } else {
         const error = await response.json();
-        toast.error('Error deleting workout: ' + error.detail);
+        toast.error('Error deleting workout: ' + (error.message || error.detail));
       }
     } catch (error) {
       console.error('Error deleting workout:', error);
@@ -234,9 +236,9 @@ function WorkoutPage({ workouts, setWorkouts }) {
           <h2 className="workout-history-title">Workout History</h2>
           <div className="workout-history-list">
             {[...workouts].reverse().map((w) => (
-              <div className="workout-card" key={w.id}>
+              <div className="workout-card" key={w._id}>
                 <div className="workout-card-data">
-                  <p className="workout-card-exercise">{w.exercise}</p>
+                  <p className="workout-card-exercise">{w.exerciseName}</p>
                   <p className="workout-card-details">
                     {w.sets} sets × {w.reps} reps @ {w.weight} kg
                   </p>
@@ -248,13 +250,13 @@ function WorkoutPage({ workouts, setWorkouts }) {
                   </button>
                   <button
                     className="delete-btn"
-                    onClick={() => handleDelete(w.id)}
+                    onClick={() => handleDelete(w._id)}
                   >
                     Delete
                   </button>
                 </div>
               </div>
-            ))}
+            ))}}
           </div>
         </div>
       )}

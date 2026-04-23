@@ -8,6 +8,7 @@ import UserShopPage from './components/user/UserShopPage';
 import UserShoppingCart from './components/user/UserShoppingCart';
 import UserMemberships from './components/user/UserMemberships';
 import UserComplaints from './components/user/UserComplaints';
+import WorkoutBotPage from './components/user/WorkoutBotPage';
 import TrackOrder from './pages/TrackOrder';
 import Checkout from './pages/Checkout';
 import AdminProgressTrackingContainer from './components/admin/AdminProgressTrackingContainer';
@@ -24,6 +25,8 @@ import AdminSignin from './pages/AdminSignin';
 import AdminSignup from './pages/AdminSignup';
 import TrainerSignin from './pages/TrainerSignin';
 import TrainerSignup from './pages/TrainerSignup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { ToastContainer } from './components/Toast';
 import logo from './images/PowerWorldGymsIcon.png';
 // Icons for navigation
@@ -33,6 +36,7 @@ import membershipsIcon from './images/memberships.png';
 import inventoryIcon from './images/inventory.png';
 import shopIcon from './images/shop.png';
 import supportIcon from './images/support.png';
+import aiIcon from './images/AI.png';
 
 function UserApp() {
   const [activePage, setActivePage] = useState('home');
@@ -49,6 +53,8 @@ function UserApp() {
         return <UserShopPage />;
       case 'support':
         return <UserComplaints />;
+      case 'workoutbot':
+        return <WorkoutBotPage />;
       case 'home':
       default:
         return <UserHomePage />;
@@ -103,6 +109,13 @@ function UserApp() {
           >
             <img src={supportIcon} alt="Support" />
             Support
+          </button>
+          <button
+            className={`header-nav-item ${activePage === 'workoutbot' ? 'active' : ''}`}
+            onClick={() => setActivePage('workoutbot')}
+          >
+            <img src={aiIcon} alt="AI Assistant" />
+            AI Assistant
           </button>
         </div>
         
@@ -289,6 +302,8 @@ function App() {
         <Route path="/signup/admin" element={<AdminSignup />} />
         <Route path="/signin/trainer" element={<TrainerSignin />} />
         <Route path="/signup/trainer" element={<TrainerSignup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* User Routes */}
         <Route

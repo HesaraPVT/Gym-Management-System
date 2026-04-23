@@ -7,7 +7,7 @@ import TrainerProfileModal from '../common/TrainerProfileModal';
 import BookingConfirmationModal from '../common/BookingConfirmationModal';
 import ChatBox from '../common/ChatBox';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5001/api';
 
 const SchedulePage = () => {
   const [availabilities, setAvailabilities] = useState([]);

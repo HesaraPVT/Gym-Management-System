@@ -12,31 +12,78 @@ const router = express.Router();
 // @access  Private
 router.post('/measurements', protect, async (req, res) => {
   try {
-    const { weight, chest, waist, arms, legs, shoulders, bodyFatPercentage, muscleMass, bmi, date, notes } = req.body;
+    console.log('=== POST /measurements ===');
+    console.log('User ID:', req.user.id);
+    console.log('Request Body:', req.body);
+    
+    const { weight, height, chest, waist, arms, legs, shoulders, bodyFatPercentage, muscleMass, bmi, date, notes } = req.body;
+    
+    // Validate required fields
+    if (!weight || !height) {
+      console.error('Missing required fields - weight or height');
+      return res.status(400).json({
+        success: false,
+        message: 'Weight and height are required'
+      });
+    }
 
-    const measurement = await Measurement.create({
+    // Check if a measurement already exists for this date
+    const measurementDate = date ? new Date(date) : new Date();
+    const startOfDay = new Date(measurementDate.getFullYear(), measurementDate.getMonth(), measurementDate.getDate());
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const existingMeasurement = await Measurement.findOne({
       userId: req.user.id,
-      weight,
-      chest,
-      waist,
-      arms,
-      legs,
-      shoulders,
-      bodyFatPercentage,
-      muscleMass,
-      bmi,
-      date: date || Date.now(),
-      notes
+      date: { $gte: startOfDay, $lt: endOfDay }
     });
+
+    if (existingMeasurement) {
+      console.log('Measurement already exists for this date');
+      return res.status(400).json({
+        success: false,
+        message: 'A measurement already exists for this date. Please edit the existing one or choose a different date.'
+      });
+    }
+
+    const measurementData = {
+      userId: req.user.id,
+      weight: Number(weight),
+      height: Number(height),
+      chest: chest ? Number(chest) : null,
+      waist: waist ? Number(waist) : null,
+      arms: arms ? Number(arms) : null,
+      legs: legs ? Number(legs) : null,
+      shoulders: shoulders ? Number(shoulders) : null,
+      bodyFatPercentage: bodyFatPercentage ? Number(bodyFatPercentage) : null,
+      muscleMass: muscleMass ? Number(muscleMass) : null,
+      bmi: bmi ? Number(bmi) : null,
+      date: measurementDate,
+      notes: notes || ''
+    };
+
+    console.log('Measurement data to be saved:', measurementData);
+
+    const measurement = await Measurement.create(measurementData);
+    
+    console.log('✅ Measurement saved successfully:', measurement._id);
 
     res.status(201).json({
       success: true,
+      message: 'Measurement saved successfully',
       measurement
     });
   } catch (error) {
+    console.error('❌ Error creating measurement:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
+      details: error.toString()
     });
   }
 });
@@ -45,7 +92,11 @@ router.post('/measurements', protect, async (req, res) => {
 // @desc    Get all measurements for a user
 router.get('/measurements/:userId', async (req, res) => {
   try {
+    console.log('Fetching measurements for userId:', req.params.userId);
+    
     const measurements = await Measurement.find({ userId: req.params.userId }).sort({ date: -1 });
+
+    console.log('Found measurements:', measurements.length);
 
     res.status(200).json({
       success: true,
@@ -53,6 +104,7 @@ router.get('/measurements/:userId', async (req, res) => {
       measurements
     });
   } catch (error) {
+    console.error('Error fetching measurements:', error);
     res.status(500).json({
       success: false,
       message: error.message

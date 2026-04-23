@@ -16,7 +16,7 @@ function AdminWorkoutPage({ workouts }) {
         const token = localStorage.getItem('token');
         
         // Fetch all users
-        const usersResponse = await fetch('http://localhost:5000/api/users', {
+        const usersResponse = await fetch('http://localhost:5001/api/users', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -24,24 +24,25 @@ function AdminWorkoutPage({ workouts }) {
 
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
-          setUsers(usersData);
+          const usersList = Array.isArray(usersData) ? usersData : usersData.users || [];
+          setUsers(usersList);
 
           // Fetch workouts for each user
           const workoutsMap = {};
-          for (const user of usersData) {
+          for (const user of usersList) {
             try {
-              const wktsResponse = await fetch(`http://localhost:5000/api/users/${user.id}/workouts`, {
+              const wktsResponse = await fetch(`http://localhost:5001/api/progress/workouts/${user._id}`, {
                 headers: {
                   'Authorization': `Bearer ${token}`
                 }
               });
               if (wktsResponse.ok) {
                 const userWorkoutsData = await wktsResponse.json();
-                workoutsMap[user.id] = userWorkoutsData;
+                workoutsMap[user._id] = userWorkoutsData.workouts || [];
               }
             } catch (error) {
-              console.error(`Error fetching workouts for user ${user.id}:`, error);
-              workoutsMap[user.id] = [];
+              console.error(`Error fetching workouts for user ${user._id}:`, error);
+              workoutsMap[user._id] = [];
             }
           }
           setUserWorkouts(workoutsMap);
@@ -59,20 +60,23 @@ function AdminWorkoutPage({ workouts }) {
   // Create members array from users and their workouts
   const memberWorkouts = useMemo(() => {
     const memberMap = {};
-    users.forEach((user) => {
-      memberMap[user.id] = userWorkouts[user.id] || [];
-    });
+    if (Array.isArray(users)) {
+      users.forEach((user) => {
+        memberMap[user._id] = userWorkouts[user._id] || [];
+      });
+    }
     return memberMap;
   }, [users, userWorkouts]);
 
   const members = useMemo(() => {
+    if (!Array.isArray(users)) return [];
     return users
       .map((user) => ({
-        id: user.id,
+        id: user._id,
         name: user.name,
         email: user.email,
-        workouts: memberWorkouts[user.id] || [],
-        totalWorkouts: (memberWorkouts[user.id] || []).length,
+        workouts: memberWorkouts[user._id] || [],
+        totalWorkouts: (memberWorkouts[user._id] || []).length,
       }))
       .sort((a, b) => b.totalWorkouts - a.totalWorkouts);
   }, [users, memberWorkouts]);
@@ -80,23 +84,25 @@ function AdminWorkoutPage({ workouts }) {
   // Filter members based on search
   const filteredMembers = useMemo(() => {
     return members.filter((m) =>
-      m.name.toLowerCase().includes(searchQuery.toLowerCase())
+      m.name && m.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [members, searchQuery]);
 
   // Get unique exercises
   const exercises = useMemo(() => {
     const exerciseSet = new Set();
-    workouts.forEach((w) => exerciseSet.add(w.exercise));
+    Object.values(memberWorkouts).forEach((userWkts) => {
+      userWkts.forEach((w) => exerciseSet.add(w.exerciseName));
+    });
     return Array.from(exerciseSet).sort();
-  }, [workouts]);
+  }, [memberWorkouts]);
 
   // Get selected member's workouts with filter
-  const selectedMemberData = selectedMemberId
+  const selectedMemberData = selectedMemberId && memberWorkouts[selectedMemberId]
     ? memberWorkouts[selectedMemberId]
         .filter(
           (w) =>
-            !filterExercise || w.exercise === filterExercise
+            !filterExercise || w.exerciseName === filterExercise
         )
         .sort((a, b) => new Date(b.date) - new Date(a.date))
     : [];
@@ -200,7 +206,7 @@ function AdminWorkoutPage({ workouts }) {
             <div className="history-header">
               <div>
                 <h2 className="section-title">
-                  Workout History - {users.find(u => u.id === selectedMemberId)?.name || 'Member'}
+                  Workout History - {users.find(u => u._id === selectedMemberId)?.name || 'Member'}
                 </h2>
                 <select
                   className="filter-select"
@@ -210,7 +216,7 @@ function AdminWorkoutPage({ workouts }) {
                   <option value="">All Exercises</option>
                   {exercises
                     .filter((ex) =>
-                      memberWorkouts[selectedMemberId].some((w) => w.exercise === ex)
+                      memberWorkouts[selectedMemberId].some((w) => w.exerciseName === ex)
                     )
                     .map((ex) => (
                       <option key={ex} value={ex}>
@@ -232,9 +238,9 @@ function AdminWorkoutPage({ workouts }) {
             ) : (
               <div className="workout-history-list">
                 {selectedMemberData.map((w) => (
-                  <div className="workout-card" key={w.id}>
+                  <div className="workout-card" key={w._id}>
                     <div className="workout-card-header">
-                      <h4 className="workout-exercise">{w.exercise}</h4>
+                      <h4 className="workout-exercise">{w.exerciseName}</h4>
                       <span className="workout-date">{formatDate(w.date)}</span>
                     </div>
                     <div className="workout-card-details">

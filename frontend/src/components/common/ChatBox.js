@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5001/api';
 
 const ChatBox = ({ currentUser, otherUser, scheduleId, onClose }) => {
   const [messages, setMessages] = useState([]);

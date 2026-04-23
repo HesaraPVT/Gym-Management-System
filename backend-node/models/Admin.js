@@ -31,6 +31,8 @@ const adminSchema = new mongoose.Schema({
     default: 3
   },
   profilePhoto: String,
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
   createdAt: {
     type: Date,
     default: Date.now

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './TrainerHome.css';
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5001/api';
 
 function TrainerHome() {
   const [trainerName, setTrainerName] = useState('');
